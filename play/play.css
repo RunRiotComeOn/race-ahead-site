@@ -46,7 +46,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--asphalt);color:v
 
 .count{position:absolute;z-index:3;left:50%;top:34%;transform:translate(-50%,-50%);font-size:min(16vw,120px);color:var(--slow);
   -webkit-text-stroke:3px var(--asphalt);paint-order:stroke fill;text-shadow:0 6px 0 rgba(17,22,29,.6);pointer-events:none}
-.count.go{color:var(--faster)}
+.count.green{color:var(--faster)}
 
 .panel{position:absolute;z-index:4;left:50%;top:50%;transform:translate(-50%,-50%);width:min(600px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;
   background:rgba(17,22,29,.95);padding:26px 30px 24px;clip-path:var(--notch);border-top:3px solid var(--fast)}

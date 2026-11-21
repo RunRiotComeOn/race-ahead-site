@@ -571,8 +571,8 @@ function render(dt) {
   // countdown
   const cd = $('count');
   if (state === 'race' && t < T0) { const n = Math.ceil(T0 - t); cd.textContent = n > 3 ? 'Ready' : String(n); cd.className = 'count px'; }
-  else if (state === 'race' && t < T0 + .9) { cd.textContent = 'Go!'; cd.className = 'count px go'; }
-  else cd.textContent = '';
+  else if (state === 'race' && t < T0 + .9) { cd.textContent = 'Go!'; cd.className = 'count px green'; }
+  else { cd.textContent = ''; cd.className = 'count px'; }
   // keep the recorded footage in step with the race clock
   if (state === 'race' && pip.readyState >= 2) {
     if (Math.abs(pip.currentTime - t) > .25) pip.currentTime = Math.min(t, pip.duration || t);
