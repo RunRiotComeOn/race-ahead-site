@@ -141,14 +141,22 @@ function stepKart(dt, t) {
 
 /* ---------------- scene ---------------- */
 const canvas = $('view');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
-renderer.setPixelRatio(1);
+const SHADOWS = new URLSearchParams(location.search).has('shadows');   // the game footage has no sun shadows
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = SHADOWS; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const MAXANISO = renderer.capabilities.getMaxAnisotropy();
+
 const scene = new THREE.Scene();
 const SKY = new THREE.Color('#9fc8e4');
 scene.background = SKY; scene.fog = new THREE.Fog(SKY, 70, 300);
 scene.add(new THREE.HemisphereLight('#e8f3ff', '#5a5130', 1.15));
 const sun = new THREE.DirectionalLight('#fff1d2', 1.5); sun.position.set(80, 140, 50); scene.add(sun);
 const hemi = scene.children.find(o => o.isHemisphereLight);
+// sun shadows in a box that follows the player's kart
+const sunDir = new THREE.Vector3(.4, .8, .3).normalize();
+sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0004; sun.shadow.normalBias = .04;
+Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 400 }); scene.add(sun.target);
 const camera = new THREE.PerspectiveCamera(72, 1, .2, 600);
 
 function mesh(pos, col, idx, mat) {
@@ -250,7 +258,12 @@ async function loadScenery() {
       if (total) startBtn.textContent = `Loading the track… ${Math.round(got / total * 100)}%`;
     }
     const bin = new Uint8Array(got); { let o = 0; for (const c of chunks) { bin.set(c, o); o += c.length; } }
-    const real = new THREE.Group(), loader = new THREE.TextureLoader();
+    const real = new THREE.Group(), loader = new THREE.TextureLoader(), cache = {};
+    const tex = (u, srgb) => {
+      if (cache[u]) return cache[u];
+      const t = loader.load('scenery/' + u); t.flipY = false; t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+      t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = MAXANISO; return cache[u] = t;
+    };
     for (const m of meta.materials) {
       const g = new THREE.BufferGeometry();
       const B = bin.buffer;
@@ -259,13 +272,27 @@ async function loadScenery() {
       g.setAttribute('color', new THREE.BufferAttribute(new Uint8Array(B, m.col, m.n * 3), 3, true));
       g.setIndex(new THREE.BufferAttribute(new Uint32Array(B, m.idx, m.m), 1));
       g.computeVertexNormals();
-      const opt = { vertexColors: true, side: m.alpha ? THREE.DoubleSide : THREE.FrontSide };
+      // the game's shaders: grass and alphatest cut out transparent texels, alphablend blends, displace is water
+      const cut = m.alpha || m.shader === 'grass' || m.shader === 'alphatest';
+      const opt = { vertexColors: true, side: cut ? THREE.DoubleSide : THREE.FrontSide };
       if (m.tex) {
-        const t = loader.load('scenery/' + m.tex); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace;
-        t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; opt.map = t;
-        if (m.alpha) opt.alphaTest = .5;
+        opt.map = tex(m.tex, true);
+        if (cut) opt.alphaTest = .5;
+        if (m.shader === 'alphablend') { opt.transparent = true; opt.depthWrite = false; }
+        if (m.shader === 'displace') { opt.transparent = true; opt.opacity = .85; }
       }
-      real.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial(opt)));
+      if (m.normal) opt.normalMap = tex(m.normal, false);
+      const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial(opt));
+      mesh.receiveShadow = true; mesh.castShadow = m.shader !== 'displace';
+      real.add(mesh);
+      if (m.tex2) {                                     // decal (tyre tracks on the road) on the second UV set
+        const d = new THREE.BufferGeometry(); d.setIndex(g.index); d.setAttribute('position', g.getAttribute('position'));
+        d.setAttribute('normal', g.getAttribute('normal'));
+        d.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(B, m.uv2, m.n * 2), 2));
+        const dm = new THREE.Mesh(d, new THREE.MeshLambertMaterial({ map: tex(m.tex2, true), transparent: true, depthWrite: false,
+          polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
+        dm.receiveShadow = true; real.add(dm);
+      }
     }
     scene.add(real); standin.visible = false;
     camera.far = 1500; camera.updateProjectionMatrix();
@@ -277,8 +304,8 @@ async function loadScenery() {
     }
     if (meta.sun) {
       const S = meta.sun, col = c => new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255);
-      sun.color = col(S.diffuse); sun.intensity = 3.2; sun.position.set(...S.xyz).normalize().multiplyScalar(200);
-      scene.remove(hemi); scene.add(new THREE.AmbientLight(col(S.ambient).multiplyScalar(2.2), 1.6));
+      sun.color = col(S.diffuse); sun.intensity = 4.2; sunDir.set(...S.xyz).normalize();
+      scene.remove(hemi); scene.add(new THREE.AmbientLight(col(S.ambient), 2.4));
       if (S.fog) scene.fog = new THREE.Fog(col(S.fog_color), S.fog_start, S.fog_start + (S.fog_end - S.fog_start) / S.fog_max);
     }
   } catch (e) { console.warn('scenery not loaded, keeping the simple one', e); }
@@ -315,7 +342,8 @@ async function loadKart() {
       g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(bin, m.uv, m.n * 2), 2));
       g.setIndex(new THREE.BufferAttribute(new Uint32Array(bin, m.idx, m.m), 1)); g.computeVertexNormals();
       const map = m.tex ? tex(alt && m.alt ? m.alt : m.tex) : null;
-      return new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map, color: map ? '#ffffff' : '#888888' }));
+      const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map, color: map ? '#ffffff' : '#888888' }));
+      mesh.castShadow = true; return mesh;
     };
     const build = alt => {
       const k = new THREE.Group(); for (const m of meta.body) k.add(part(m, alt));
@@ -423,8 +451,8 @@ for (const b of document.querySelectorAll('#touch button')) {
 
 /* ---------------- loop ---------------- */
 function resize() {
-  const w = innerWidth, h = innerHeight, px = w > 1100 ? 2 : 1.5;
-  renderer.setSize(Math.round(w / px), Math.round(h / px), false);
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
 }
 addEventListener('resize', resize); resize();
@@ -444,10 +472,12 @@ function render(dt) {
   const gh = Math.hypot(gq.x - gp.x, gq.z - gp.z) > .05 ? Math.atan2(gq.z - gp.z, gq.x - gp.x) : Math.atan2(gp.f.tz, gp.f.tx);
   placeKart(champKart, gp.x, gp.y, gp.z, gh);
   turnWheels(champKart, state === 'race' && t >= T0 ? g.v : 0, 0, dt);
-  // chase camera
-  const fx = Math.cos(me.h), fz = Math.sin(me.h);
-  const want = new THREE.Vector3(me.x - fx * 4.2, me.y + 1.9, me.z - fz * 4.2);
-  const lk = new THREE.Vector3(me.x + fx * 4, me.y + .5, me.z + fz * 4);
+  // chase camera (behind the champion in the ?view=SECONDS comparison mode)
+  const F = VIEW != null ? { x: gp.x, y: gp.y, z: gp.z, h: gh } : { x: me.x, y: me.y, z: me.z, h: me.h };
+  const fx = Math.cos(F.h), fz = Math.sin(F.h);
+  const want = new THREE.Vector3(F.x - fx * 4.2, F.y + 1.9, F.z - fz * 4.2);
+  const lk = new THREE.Vector3(F.x + fx * 4, F.y + .5, F.z + fz * 4);
+  sun.target.position.set(F.x, F.y, F.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 200);
   if (!camInit || dt > .5) { cam.copy(want); look.copy(lk); camInit = true; }
   const a = 1 - Math.exp(-dt * 7); cam.lerp(want, a); look.lerp(lk, 1 - Math.exp(-dt * 12));
   camera.position.copy(cam); camera.lookAt(look);
@@ -492,5 +522,11 @@ function frame(now) {
   render(dt);
   requestAnimationFrame(frame);
 }
+// ?view=SECONDS: a still of the recorded lap at that time, camera behind the champion, to compare with the game's footage
+const VIEW = (() => { const v = parseFloat(new URLSearchParams(location.search).get('view')); return Number.isFinite(v) ? v : null; })();
 reset();
+if (VIEW != null) {
+  t = VIEW; $('intro').classList.add('hide'); youKart.visible = false;
+  pip.addEventListener('loadeddata', () => { pip.currentTime = VIEW; }, { once: true }); if (pip.readyState >= 2) pip.currentTime = VIEW;
+}
 requestAnimationFrame(frame);
