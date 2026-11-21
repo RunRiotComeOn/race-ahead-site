@@ -14,4 +14,4 @@ match the records. The 2:30 demo video is linked, not embedded. The live demo (`
 - This repository holds the built site only. It is generated in the code repository
   ([car-racing-with-continual-learning](https://github.com/RunRiotComeOn/car-racing-with-continual-learning)) by
   `sh scripts/build_site.sh` (copies the live demo) or `sh scripts/build_site.sh --media` (also the media) into its `site/`
-  folder, then copied here: `rsync -a --delete --exclude .git --exclude .DS_Store <code repo>/site/ ./`.
+  folder, then copied here: `rsync -a --delete --exclude .git --exclude .nojekyll --exclude .gitignore --exclude README.md --exclude .DS_Store <code repo>/site/ ./`.
