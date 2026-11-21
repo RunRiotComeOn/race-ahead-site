@@ -7,7 +7,7 @@
 <meta name="description" content="A driving harness that rewrites itself between laps: a run-time language model picks options while the kart drives; an offline model rewrites the action space, the executor and the playbook, and reviews every change.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27 shape-rendering=%27crispEdges%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%2311161d%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%2338d0e2%27/%3E%3Crect x=%271%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3Crect x=%275%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="fonts/fonts.css">
-<link rel="stylesheet" href="style.css?v=15">
+<link rel="stylesheet" href="style.css?v=16">
 </head>
 <body>
 <div class="bg" aria-hidden="true"><video autoplay muted loop playsinline preload="auto" poster="media/bg.jpg" src="media/bg.mp4"></video></div>
@@ -115,14 +115,20 @@
 </section>
 
 <section id="cite">
-  <p class="kicker px">Cite</p>
-  <pre class="bib">@misc{raceahead2026,
-  author       = {Huang, Yixu},
+  <details class="cite">
+    <summary><span class="kicker px">Cite</span><span class="hint">BibTeX</span></summary>
+    <div class="bibbox">
+      <button class="copy" id="copyBib" type="button" aria-label="Copy the BibTeX entry" title="Copy">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="5" y="5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3 11V3a1 1 0 0 1 1-1h7" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        <span>Copy</span></button>
+      <pre class="bib" id="bib">@misc{raceahead2026,
   title        = {Race Ahead: A Driving Harness That Rewrites Itself Between Laps},
   howpublished = {\url{https://runriotcomeon.github.io/race-ahead-site/}},
   note         = {Project website},
   year         = {2026}
 }</pre>
+    </div>
+  </details>
 </section>
 </main>
 
@@ -133,6 +139,6 @@
 <script src="data.js"></script>
 <script src="laps.js"></script>
 <script src="laps-unseen.js"></script>
-<script src="site.js?v=19"></script>
+<script src="site.js?v=20"></script>
 </body>
 </html>

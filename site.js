@@ -338,5 +338,14 @@
     });
   }
 
+  // cite: copy the whole BibTeX entry
+  const cb = $('copyBib');
+  if (cb) cb.addEventListener('click', async () => {
+    const text = $('bib').textContent, label = cb.querySelector('span');
+    try { await navigator.clipboard.writeText(text); }
+    catch { const r = document.createRange(); r.selectNodeContents($('bib')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+    cb.classList.add('done'); label.textContent = 'Copied'; setTimeout(() => { cb.classList.remove('done'); label.textContent = 'Copy'; }, 1600);
+  });
+
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { curve(); lineage(); }, 120); });
 })();
