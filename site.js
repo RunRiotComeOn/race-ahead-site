@@ -14,9 +14,9 @@
   const res = D.results, runs = res.runs, main = runs.filter(r => r.test_s < 230);
   const rng = (a, f = v => v.toFixed(0)) => `${f(Math.min(...a))}–${f(Math.max(...a))}`;
   $('facts').innerHTML = [
+    ['2 models', 'one drives the kart, the other rewrites the driving harness between laps', ''],
     [`${rng(runs.map(r => r.start_test_s))} s → ${rng(main.map(r => r.test_s))} s`, `three crude starts on 4 unseen tracks, after 40 rounds (${main.length} of ${runs.length} runs)`, ''],
-    [`${rng(main.map(r => r.gap_closed * 100), v => Math.floor(v))} %`, 'of the gap to the oracle closed by those runs', 'c'],
-    ['0', "demonstrations · the oracle's laps are never shown to the system", '']]
+    [`${rng(main.map(r => r.gap_closed * 100), v => Math.floor(v))} %`, 'of the gap to the oracle closed by those runs', 'c']]
     .map(([v, k, c]) => `<div><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
   {
     const starts = [...new Map(runs.map(r => [r.start, r.start_test_s])).entries()];
