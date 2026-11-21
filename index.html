@@ -7,7 +7,7 @@
 <meta name="description" content="An AI learns to race in a video game by rewriting its own driving program between laps, from nothing but its own lap records. Every change is measured on the track and reviewed in writing.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27 shape-rendering=%27crispEdges%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%2311161d%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%2338d0e2%27/%3E%3Crect x=%271%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3Crect x=%275%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="fonts/fonts.css">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 <div class="bg" aria-hidden="true"><video autoplay muted loop playsinline preload="auto" poster="media/bg.jpg" src="media/bg.mp4"></video></div>
@@ -25,7 +25,7 @@
   <p class="tag">An AI learns to race in a video game by rewriting its own driving program between laps, using nothing but the records of its own laps.</p>
   <div class="links">
     <a class="btn primary" href="play/">Race our AI · play</a>
-    <a class="btn" href="media/race-ahead-demo.mp4">Watch the video · 2:30</a>
+    <a class="btn" id="openVideo" href="media/race-ahead-demo.mp4">Watch the video · 2:30</a>
   </div>
   <div class="facts" id="facts"></div>
 </section>
@@ -96,8 +96,8 @@
   <p class="kicker px">06 · Failures stay in the record</p>
   <h2>Big redesigns, crashes and repairs are all kept</h2>
   <p class="lead">The cyan line is the best version so far; each square on it is a round that made it faster (the number is its total time in seconds). A big redesign is built on a side track below the line and joins the main line only once it is faster and the reviewer agrees. A red cross is a round where the new version crashed. In rounds 1–5 a bold rewrite crashed on every track; each error message went back to the system until it gave the redesign up. In round 20 another redesign crashed on every track, was repaired in round 21, and joined the main line. Click any side track.</p>
-  <div class="lineage"><svg id="lineage" role="img" aria-label="The best version so far and the side tracks of bigger redesigns"></svg>
-    <div class="legend"><span><i style="background:var(--fast)"></i>best version so far</span><span><i style="background:var(--faster)"></i>small edits kept</span><span><i style="background:var(--best)"></i>redesign that joined</span><span><i style="background:var(--slower)"></i>redesign given up · crash</span><span><i style="background:var(--chalk-3)"></i>merge refused by the reviewer</span></div>
+  <div class="lineage"><div class="lscroll"><svg id="lineage" role="img" aria-label="The best version so far and the side tracks of bigger redesigns"></svg></div><p class="swipe">Swipe the chart sideways to see all 40 rounds.</p>
+    <div class="legend"><span><i style="background:var(--fast)"></i>best version so far</span><span><i style="background:var(--faster)"></i>small edits kept</span><span><i style="background:var(--best)"></i>redesign that joined</span><span><i style="background:var(--slower)"></i>redesign given up · crash</span><span><i style="background:var(--chalk-3)"></i>refused by the reviewer</span></div>
     <div class="bdetail" id="bDetail"></div></div>
 </section>
 
@@ -150,6 +150,11 @@
 </section>
 </main>
 
+<dialog class="vidbox" id="vidBox" aria-label="Race Ahead video">
+  <div class="vidin"><button class="vclose" id="closeVideo" type="button" aria-label="Close the video">✕</button>
+    <video id="demoVideo" controls playsinline preload="none" poster="media/bg.jpg" src="media/race-ahead-demo.mp4"></video></div>
+</dialog>
+
 <footer>
   <span class="px">Race Ahead</span>
   <span>Built on SuperTuxKart via pystk2.</span>
@@ -157,6 +162,6 @@
 <script src="data.js"></script>
 <script src="laps.js"></script>
 <script src="laps-unseen.js"></script>
-<script src="site.js?v=22"></script>
+<script src="site.js?v=23"></script>
 </body>
 </html>

@@ -227,7 +227,7 @@
   const R = D.rounds;
   const OUT = { adopted: ['edits kept', '--faster'], branch_merged: ['redesign joined', '--best'], nothing_admitted: ['nothing kept', '--chalk-3'], confirm_failed: ['kept edits failed the re-check', '--slower'],
     no_valid_proposal: ['no usable proposal', '--chalk-3'], branch_opened: ['bigger redesign started', '--slow'], branch_not_improved: ['redesign repaired, not faster yet', '--slow'], branch_improved: ['redesign improved', '--slow'],
-    branch_merge_rejected: ['faster, but the reviewer refused the merge', '--chalk-2'], branch_merge_blocked: ['faster, held back to fix a flaw', '--chalk-2'] };
+    branch_merge_rejected: ['faster, but the reviewer refused to let it join', '--chalk-2'], branch_merge_blocked: ['faster, held back to fix a flaw', '--chalk-2'] };
   const outLabel = o => (OUT[o.split('+')[0]] || [o.replace(/_/g, ' ')])[0] + (o.includes('+branch_dropped') ? ' · redesign dropped' : '');
   const kind = r => r.crash ? '--slower' : r.outcome === 'adopted' ? '--faster' : r.outcome === 'branch_merged' ? '--best' : r.branch ? '--slow' : '--chalk-3';
   let cur = R.findIndex(r => r.round === 15), focus = 's2_steer_body';
@@ -269,7 +269,7 @@
     const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : plainWords(r.plain);
     const items = r.items.map(it => {
       const branchWork = it.all_s == null;
-      const st = branchWork ? null : r.outcome === 'confirm_failed' ? ['Not kept', 'n'] : it.admitted === true ? ['Admitted', 'g'] : ['Rejected', 'r'];
+      const st = branchWork ? null : r.outcome === 'confirm_failed' ? ['Not kept', 'n'] : it.admitted === true ? ['Kept', 'g'] : ['Rejected', 'r'];
       return `<div class="item${it.id === focus ? ' focus' : ''}${st ? ' ' + st[1] : ''}" data-id="${esc(it.id)}">
         <div class="ih"><p class="chg">${esc(plainWords(it.plain) || it.id)}</p>${st ? `<span class="px st ${st[1]}">${st[0]}</span>` : ''}</div>
         ${branchWork ? '' : `<div class="meas">${meas('All edits together', it.all_s, 'with')}${meas('Without this edit', it.loo_s, 'without')}${meas('This edit alone', it.alone_s, 'with')}</div>`}
@@ -287,7 +287,7 @@
   curve(); detail();
 
   /* ---------- branches ---------- */
-  const END = { merged: ['Joined the main line', '--best'], dropped: ['Given up', '--slower'], rejected: ['Merge refused by the reviewer', '--chalk-2'], open: ['Still open when the run ended', '--slow'] };
+  const END = { merged: ['Joined the main line', '--best'], dropped: ['Given up', '--slower'], rejected: ['Refused by the reviewer', '--chalk-2'], open: ['Still open when the run ended', '--slow'] };
   let bSel = D.branches.findIndex(b => b.opened === 20); if (bSel < 0) bSel = 0;
   function lineage() {
     const svg = $('lineage'), W = Math.max(520, svg.getBoundingClientRect().width), H = 240; svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = '';
@@ -348,6 +348,16 @@
       el('text', { x: x(r.gap_closed) + 6, y: yy + rowH * .64, fill: c, 'font-size': 12, 'font-family': css('--f-data') }, g).textContent = Math.floor(r.gap_closed * 100) + '%';
     });
   }
+
+  // the 2:30 video plays in a dialog on the page (the link still opens the file without JavaScript)
+  { const box = $('vidBox'), v = $('demoVideo'), open = $('openVideo');
+    if (box && v && open && box.showModal) {
+      const close = () => { v.pause(); box.close(); };
+      open.addEventListener('click', e => { e.preventDefault(); box.showModal(); v.play().catch(() => {}); });
+      $('closeVideo').addEventListener('click', close);
+      box.addEventListener('click', e => { if (e.target === box) close(); });
+      box.addEventListener('close', () => v.pause());
+    } }
 
   // cite: copy the whole BibTeX entry
   const cb = $('copyBib');
