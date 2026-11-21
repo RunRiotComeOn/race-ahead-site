@@ -529,4 +529,5 @@ if (VIEW != null) {
   t = VIEW; $('intro').classList.add('hide'); youKart.visible = false;
   pip.addEventListener('loadeddata', () => { pip.currentTime = VIEW; }, { once: true }); if (pip.readyState >= 2) pip.currentTime = VIEW;
 }
+if (new URLSearchParams(location.search).has('debug')) window.__dbg = { renderer, scene, camera, THREE };
 requestAnimationFrame(frame);
