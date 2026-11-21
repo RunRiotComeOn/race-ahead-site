@@ -97,6 +97,72 @@ function placeAt(s, lat) {
   const p = posAt(s, lat); me.x = p.x; me.z = p.z; me.y = p.y; me.h = Math.atan2(p.f.tz, p.f.tx);
   me.k = segAt(s); me.s = s; me.lat = lat;
 }
+/* ---------------- walls: what the kart hits (scenery/walls.bin from play_scenery.py) ---------------- */
+// Rows x0 z0 x1 z1 ymin ymax: steep faces of the game's solid meshes near the road. A face counts where it reaches the
+// kart's height band (0.3 to 1.0 m over the road). Faces the recorded champion drove through are dropped: it proves
+// they are passable in the game.
+const KART_R = .6, WALL_CELL = 4;
+const walls = { seg: null, grid: new Map(), on: null };
+const wkey = (i, j) => i * 100003 + j;
+function wallsNear(x, z, r, fn) {
+  const i0 = Math.floor((x - r) / WALL_CELL), i1 = Math.floor((x + r) / WALL_CELL), j0 = Math.floor((z - r) / WALL_CELL), j1 = Math.floor((z + r) / WALL_CELL);
+  const seen = new Set();
+  for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) for (const k of walls.grid.get(wkey(i, j)) || [])
+    if (!seen.has(k)) { seen.add(k); if (walls.on[k]) fn(k); }
+}
+function closest(k, x, z) {                    // closest point of segment k to (x, z)
+  const S = walls.seg, o = k * 6, ax = S[o], az = S[o + 1], ex = S[o + 2] - ax, ez = S[o + 3] - az, l2 = ex * ex + ez * ez || 1e-9;
+  const u = clamp(((x - ax) * ex + (z - az) * ez) / l2, 0, 1); return [ax + ex * u, az + ez * u];
+}
+const inBand = (k, y, lo = .3, hi = 1) => walls.seg[k * 6 + 5] > y + lo && walls.seg[k * 6 + 4] < y + hi;
+function setWalls(buf) {
+  const S = walls.seg = new Float32Array(buf), n = S.length / 6; walls.on = new Uint8Array(n).fill(1);
+  for (let k = 0; k < n; k++) {
+    const o = k * 6, i0 = Math.floor(Math.min(S[o], S[o + 2]) / WALL_CELL), i1 = Math.floor(Math.max(S[o], S[o + 2]) / WALL_CELL);
+    const j0 = Math.floor(Math.min(S[o + 1], S[o + 3]) / WALL_CELL), j1 = Math.floor(Math.max(S[o + 1], S[o + 3]) / WALL_CELL);
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) { const key = wkey(i, j); (walls.grid.get(key) || walls.grid.set(key, []).get(key)).push(k); }
+  }
+  let dropped = 0;                              // passable where the champion drove (and on the starting grid)
+  const clear = (x, z, y) => wallsNear(x, z, KART_R + .3, k => {
+    const [cx, cz] = closest(k, x, z); if (Math.hypot(x - cx, z - cz) < KART_R + .3 && inBand(k, y)) { walls.on[k] = 0; dropped++; } });
+  for (let i = 0; i < G.length; i++) { const p = posAt(G[i][1], G[i][2]); clear(p.x, p.z, p.y); }
+  for (const lat of [-2.5, -1.8, -1, 0, 1, 1.8, 2.5]) for (let s = -3; s <= 3; s += 1) { const p = posAt(G[0][1] + s, lat); clear(p.x, p.z, p.y); }
+  console.info('walls', n, 'dropped on the champion\'s line', dropped);
+}
+function collideWalls() {                       // push the kart out of walls; keep only the speed along the wall
+  if (!walls.seg) return false;
+  let hit = false;
+  for (let pass = 0; pass < 2; pass++) wallsNear(me.x, me.z, KART_R, k => {
+    if (!inBand(k, me.y)) return;
+    const [cx, cz] = closest(k, me.x, me.z); let nx = me.x - cx, nz = me.z - cz; const d = Math.hypot(nx, nz);
+    if (d >= KART_R) return;
+    if (d < 1e-6) { const o = k * 6; nx = -(walls.seg[o + 3] - walls.seg[o + 1]); nz = walls.seg[o + 2] - walls.seg[o]; }
+    const nl = Math.hypot(nx, nz) || 1; nx /= nl; nz /= nl;
+    me.x = cx + nx * KART_R; me.z = cz + nz * KART_R;
+    const vx = Math.cos(me.h) * me.v, vz = Math.sin(me.h) * me.v, vn = vx * nx + vz * nz;
+    if (vn < 0) {
+      const tx = vx - vn * nx, tz = vz - vn * nz, vt = Math.hypot(tx, tz);
+      me.v = Math.sign(me.v) * vt * (-vn > 6 ? .55 : .8);                // a hard hit costs more
+      if (vt > .5) me.h = me.v >= 0 ? Math.atan2(tz, tx) : Math.atan2(-tz, -tx);
+      hit = true;
+    }
+  });
+  return hit;
+}
+// the camera stays on the kart's side of any wall between them
+function cameraClip(fx, fz, cx, cz, y) {
+  if (!walls.seg) return 1;
+  let best = 1; const dx = cx - fx, dz = cz - fz, len = Math.hypot(dx, dz);
+  wallsNear((fx + cx) / 2, (fz + cz) / 2, len / 2 + .5, k => {
+    if (!inBand(k, y, .2, 2.4)) return;
+    const S = walls.seg, o = k * 6, ex = S[o + 2] - S[o], ez = S[o + 3] - S[o + 1];
+    const den = dx * ez - dz * ex; if (Math.abs(den) < 1e-9) return;
+    const u = ((S[o] - fx) * ez - (S[o + 1] - fz) * ex) / den, w = ((S[o] - fx) * dz - (S[o + 1] - fz) * dx) / den;
+    if (u > 0 && u < best && w >= 0 && w <= 1) best = u;
+  });
+  return best;
+}
+
 function rescue() {
   if (me.frozen > 0) return;
   placeAt(me.s, 0); me.v = 0; me.steer = 0; me.frozen = 1.2; me.off_t = 0; warn('Back on the road', 1.4);
@@ -119,8 +185,9 @@ function stepKart(dt, t) {
   if (Math.abs(yaw) > lim) { me.v -= Math.sign(me.v) * Math.min(Math.abs(me.v), (Math.abs(yaw) - lim) * Math.abs(me.v) * SCRUB * dt); yaw = Math.sign(yaw) * lim; }
   me.h += yaw * dt;
   me.x += Math.cos(me.h) * me.v * dt; me.z += Math.sin(me.h) * me.v * dt;
+  collideWalls();
   const pr = project(me.x, me.z, me.k);
-  const fence = pr.w / 2 + 4.5;
+  const fence = pr.w / 2 + (walls.seg ? 8 : 4.5);   // the real walls do the work; this only stops escapes
   if (Math.abs(pr.lat) > fence) {                 // a fence beside the road: no cutting across the infield
     const back = Math.abs(pr.lat) - fence, sg = Math.sign(pr.lat);
     me.x -= sg * pr.tz * back; me.z += sg * pr.tx * back;
@@ -132,7 +199,8 @@ function stepKart(dt, t) {
   me.prog += ds; me.s = pr.s; me.k = pr.k; me.lat = pr.lat; me.y = pr.y;
   me.on = Math.abs(pr.lat) <= pr.w / 2 + .4;
   me.off_t = me.on ? 0 : me.off_t + dt;
-  if (me.off_t > 3) rescue();
+  me.stuck_t = !me.on && Math.abs(me.v) < 1.5 ? (me.stuck_t || 0) + dt : 0;   // stopped off the road, e.g. against a fence
+  if (me.off_t > 3 || me.stuck_t > 1.2) { me.stuck_t = 0; rescue(); }
   const fw = Math.cos(me.h) * pr.tx + Math.sin(me.h) * pr.tz;
   if (fw < -.3 && me.v > 2) warn('Wrong way', .3);
   else if (!me.on) warn('Off the road: slow', .3);
@@ -157,7 +225,7 @@ const hemi = scene.children.find(o => o.isHemisphereLight);
 const sunDir = new THREE.Vector3(.4, .8, .3).normalize();
 sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -.0004; sun.shadow.normalBias = .04;
 Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 400 }); scene.add(sun.target);
-const camera = new THREE.PerspectiveCamera(72, 1, .2, 600);
+const camera = new THREE.PerspectiveCamera(72, 1, .9, 600);   // near .9 m: leaves right at the lens are not drawn
 
 function mesh(pos, col, idx, mat) {
   const g = new THREE.BufferGeometry();
@@ -295,6 +363,7 @@ async function loadScenery() {
       }
     }
     scene.add(real); standin.visible = false;
+    try { const wr = await fetch('scenery/walls.bin'); if (wr.ok) setWalls(await wr.arrayBuffer()); } catch (e) { console.warn('no walls', e); }
     camera.far = 1500; camera.updateProjectionMatrix();
     // the track's own sky box, sun, ambient light and fog (scene.xml)
     if (meta.sky) {
@@ -480,7 +549,10 @@ function render(dt) {
   sun.target.position.set(F.x, F.y, F.z); sun.position.copy(sun.target.position).addScaledVector(sunDir, 200);
   if (!camInit || dt > .5) { cam.copy(want); look.copy(lk); camInit = true; }
   const a = 1 - Math.exp(-dt * 7); cam.lerp(want, a); look.lerp(lk, 1 - Math.exp(-dt * 12));
-  camera.position.copy(cam); camera.lookAt(look);
+  camera.position.copy(cam);
+  { const u = cameraClip(F.x, F.z, cam.x, cam.z, F.y);       // pull the camera in front of a wall behind the kart
+    if (u < 1) { const k = Math.max(.3, u - .12); camera.position.set(F.x + (cam.x - F.x) * k, cam.y, F.z + (cam.z - F.z) * k); } }
+  camera.lookAt(look);
   renderer.render(scene, camera);
   // HUD
   $('hTime').textContent = t.toFixed(2);
