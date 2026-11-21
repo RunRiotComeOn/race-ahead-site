@@ -10,19 +10,29 @@
   const el = (tag, at, parent) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; };
   const sgn = (v, d = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(d);
 
+  /* ---------- plain names ---------- */
+  const START = { 'crude 1': 'Start A', 'crude 2': 'Start B', 'crude 3': 'Start C' };
+  const startName = k => START[k] || k, repeatName = sd => 'repeat ' + sd.replace(/\D/g, '');
+  const LAPNAMES = { r00: ['First version', 'round 0'], r07: ['Round 7', 'higher target speeds'], r11: ['Round 11', 'slows only as much as a curve needs'],
+    r14: ['Round 14', 'flat out on straights'], r40: ['Final version', 'after 40 rounds'], oracle: ["Game's own AI", 'knows the whole track'] };
+  for (const L of [window.LAPS, window.UNSEEN]) if (L) for (const [k, [a, b]] of Object.entries(LAPNAMES)) if (L[k]) { L[k].label = a; L[k].note = b; }
+
   /* ---------- key facts, starting bars ---------- */
-  const res = D.results, runs = res.runs, main = runs.filter(r => r.test_s < 230);
-  const rng = (a, f = v => v.toFixed(0)) => `${f(Math.min(...a))}–${f(Math.max(...a))}`;
+  const res = D.results, runs = res.runs;
+  const U = window.UNSEEN, gap = U ? (U.r00.lap - U.r40.lap) / (U.r00.lap - U.oracle.lap) : null;
   $('facts').innerHTML = [
-    ['2 models', 'one drives the kart, the other rewrites the driving harness between laps', ''],
-    [`${rng(runs.map(r => r.start_test_s))} s → ${rng(main.map(r => r.test_s))} s`, `three crude starts on 4 unseen tracks, after 40 rounds (${main.length} of ${runs.length} runs)`, ''],
-    [`${rng(main.map(r => r.gap_closed * 100), v => Math.floor(v))} %`, 'of the gap to the oracle closed by those runs', 'c']]
-    .map(([v, k, c]) => `<div><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
+    ['2 models', 'one drives the kart, the other rewrites its driving program between laps', ''],
+    U ? [`${U.r00.lap.toFixed(0)} s → ${U.r40.lap.toFixed(0)} s`, 'one lap on a snowy track it never practiced on: the first version, and the version after 40 rounds', ''] : null,
+    U ? [`${Math.round(gap * 100)} %`, `of the distance to the game's own AI closed there (the game's AI, which knows the track: ${U.oracle.lap.toFixed(0)} s)`, 'c'] : null]
+    .filter(Boolean).map(([v, k, c]) => `<div><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
+  { const g = runs.map(r => r.gap_closed * 100);
+    if ($('runsSummary')) $('runsSummary').textContent = `Every run kept getting faster, and on the tracks it never practiced on each one closed between ${Math.floor(Math.min(...g))} % and ${Math.floor(Math.max(...g))} % of the distance to the game's own AI.`; }
+  if (U && $('gapExample')) $('gapExample').textContent = `Example: start B needs ${U.r00.lap.toFixed(0)} s on the snowy track, the game's own AI ${U.oracle.lap.toFixed(0)} s and the final version ${U.r40.lap.toFixed(0)} s, so that lap closed (${U.r00.lap.toFixed(0)} − ${U.r40.lap.toFixed(0)}) / (${U.r00.lap.toFixed(0)} − ${U.oracle.lap.toFixed(0)}) ≈ ${Math.round(gap * 100)} % of the distance.`;
   {
     const starts = [...new Map(runs.map(r => [r.start, r.start_test_s])).entries()];
-    const rows = [...starts.map(([k, v]) => [k, v, 'var(--ghost)']), ['oracle', res.oracle_test_s, 'var(--oracle)']];
+    const rows = [...starts.map(([k, v]) => [startName(k), v, 'var(--ghost)']), ["Game's own AI", res.oracle_test_s, 'var(--oracle)']];
     const mx = Math.max(...rows.map(r => r[1]));
-    $('startBars').innerHTML = '<p class="px small">Lap time · 4 unseen tracks</p>' + rows.map(([k, v, c]) =>
+    $('startBars').innerHTML = '<p class="px small">Total time · 4 tracks never used for practice</p>' + rows.map(([k, v, c]) =>
       `<div class="hb"><span class="px">${k}</span><div><span class="tr"><i style="width:${(v / mx * 100).toFixed(1)}%;background:${c}"></i></span><b>${v.toFixed(0)} s</b></div></div>`).join('');
   }
 
@@ -40,21 +50,21 @@
 
   /* ---------- system diagram: details on hover / focus / tap ---------- */
   const TIPS = {
-    rt0: ['Section ahead', '70 m before each section, Jev gets the section\'s geometry (length, radius, curvature), the kart\'s live state and the playbook\'s advice for it.'],
-    rt1: ['playbook.json · harness 1/3', 'Rules over section features, e.g. "minimum radius under 15 m", that recommend an answer per question. Jev usually follows them unless the live state says otherwise. Rewritten between laps.'],
-    rt2: ['action_space.json · harness 2/3', 'The questions Jev answers for every section and their options, in plain language (for example pace, line, braking, corner mode). The proposer can add, remove or redefine questions; every 4th round it must redesign part of them.'],
-    rt3: ['Jev · run-time model', 'Only picks one option per question per section. It never writes code and never touches the controls directly; it is the same model in every round.'],
-    rt4: ['executor.py · harness 3/3', 'Python code that turns the chosen options into steering, throttle, brake and drift, 60 times a second. Rewritten between laps.'],
-    rt5: ['Lap log', 'Per-section times, Jev\'s answers, frame traces (speed, lateral offset, steering), rescues and time off the road. This is everything the loop learns from.'],
-    c1: ['1 · Champion laps', 'The current champion harness drives one lap on each of the 10 training tracks.'],
-    c2: ['2 · Proposer (DeepSeek)', 'Reads every lap and the edit log, can look at frame traces and try changes first, then proposes up to 16 changes to the three files, each with a rationale.'],
-    c3: ['3 · Validate', 'Every change must load and run on every track. If the candidate crashes, the error and traceback go back to the proposer in the next round.'],
-    c4: ['4 · Measure', 'All changes together, all but one (each change left out in turn), and each change alone are driven on the 10 tracks: how much each one is worth, with and without the others.'],
-    c5: ['5 · Reviewer (DeepSeek)', 'Reads the measurements, the rationale and the diff, and admits or rejects each change, writing why. It is not a rubber stamp: see round 15 below.'],
-    c6: ['6 · Confirm lap', 'The admitted set is driven again; if it makes the training total at least 0.05 s faster, it becomes the new champion.'],
-    trial: ['Trial runs', 'Before proposing, the proposer can run candidate changes on a single section (a few seconds) or on a full lap of one training track, compared with the current harness. Nothing is committed.'],
-    branch: ['Development branch', 'A large redesign that is not yet faster moves to a branch: 4 repair rounds when it is opened, up to 10 in all. It merges only when it beats the champion, otherwise it is dropped.'],
-    editlog: ['Edit log', 'Every past change with its measurements and the reviewer\'s verdict and reason; the proposer sees the most recent 40 entries and is told not to repeat rejected changes.'],
+    rt0: ['A section is coming', '70 m before each section, Jev is told what is ahead (how long it is, how sharply it bends), how fast the kart is going, and what the rules suggest.'],
+    rt1: ['Rules · driving program 1/3', 'Simple rules that suggest an answer, for example "if the tightest bend is under 15 m, brake early". Jev usually follows them unless the kart\'s state says otherwise. File: playbook.json.'],
+    rt2: ['Questions · driving program 2/3', 'The questions Jev answers for every section and the options it can pick, in plain words (how fast, which line, how to brake). The second model can add, remove or reword questions. File: action_space.json.'],
+    rt3: ['Jev · the driver', 'Only picks one option per question per section. It never writes code and never touches the controls itself, and it is the same model in every round.'],
+    rt4: ['Control code · driving program 3/3', 'Python code that turns Jev\'s answers into steering, throttle, brake and drift, 60 times a second. File: executor.py.'],
+    rt5: ['Lap record', 'Time per section, Jev\'s answers, speed and steering along the lap, and any time spent off the road. This is all the system learns from.'],
+    c1: ['1 · Drive the best version', 'The best version so far drives one lap on each of the 10 practice tracks.'],
+    c2: ['2 · A second model proposes edits', 'A second language model (DeepSeek) reads every lap record and the list of past edits, can try ideas out first, then proposes up to 16 edits to the three files, each with its reason.'],
+    c3: ['3 · Check it runs', 'Every edit must load and run on every track. If the new version crashes, the error message goes back to the second model in the next round.'],
+    c4: ['4 · Measure each edit', 'All edits together, all edits but one (each left out in turn), and each edit alone are driven on the 10 practice tracks: how much each edit is worth, with and without the others.'],
+    c5: ['5 · A reviewer decides', 'A reviewer model reads the measurements, the reasons and the code, keeps or rejects each edit, and writes down why. It is not a rubber stamp: see round 15 below.'],
+    c6: ['6 · Drive again', 'The kept edits are driven again together; if they make the total time on the practice tracks at least 0.05 s faster, this becomes the new best version.'],
+    trial: ['Try first', 'Before proposing, the second model can test an idea on one section (a few seconds) or on a full lap of one practice track, next to the current version. Nothing is kept from these tries.'],
+    branch: ['Big redesigns, on the side', 'A big redesign that is not faster yet is worked on separately for 4 to 10 rounds. It joins the main line only when it beats the best version; otherwise it is given up.'],
+    editlog: ['Memory of past edits', 'Every past edit with its measurements and the reviewer\'s decision and reason. The second model sees the latest 40 and is told not to repeat rejected edits.'],
   };
   {
     // the system as a circuit: one lap along the top straight, one round of evolution once around the track
@@ -62,12 +72,12 @@
     const F = { px: css('--f-pixel'), disp: css('--f-display'), body: css('--f-body') };
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const gx = [110, 306, 502, 698, 894, 1090];
-    const GATES = [['rt0', '70 m ahead', 'Section ahead', 'Geometry, kart state', C.c2], ['rt1', 'Advice', 'playbook.json', 'Rules recommend answers', C.slow, 'harness 1/3'],
-      ['rt2', 'Interface', 'action_space.json', 'Questions and options', C.slow, 'harness 2/3'], ['rt3', 'Run-time model', 'Jev', 'Picks one option each', C.fast],
-      ['rt4', '60 Hz', 'executor.py', 'Choices → controls', C.slow, 'harness 3/3'], ['rt5', 'Evidence', 'Lap log', 'Times and traces', C.c2]];
-    const ST = [['c1', 360, 420, 'Start', 'Champion laps', 'One lap on 10 training tracks', C.fast, -1], ['c2', 600, 420, 'DeepSeek', 'Proposer', 'Reads the laps · up to 16 changes', C.slow, -1],
-      ['c3', 840, 420, 'Checks', 'Validate', 'Must run on every track', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', 'Together · one out · alone', C.fast, 1],
-      ['c5', 600, 720, 'DeepSeek', 'Reviewer', 'Admits or rejects, in writing', C.slow, 1], ['c6', 360, 720, 'Admission', 'Confirm lap', '0.05 s faster: new champion', C.faster, 1]];
+    const GATES = [['rt0', '70 m ahead', 'A section', 'Its shape, the kart\'s speed', C.c2], ['rt1', 'Suggest', 'Rules', 'Suggest an answer', C.slow, 'program 1/3'],
+      ['rt2', 'Ask', 'Questions', 'How fast? Which line?', C.slow, 'program 2/3'], ['rt3', 'The driver', 'Jev', 'Picks one answer each', C.fast],
+      ['rt4', '60 times a second', 'Control code', 'Answers → steering', C.slow, 'program 3/3'], ['rt5', 'Afterwards', 'Lap record', 'Times, speeds, answers', C.c2]];
+    const ST = [['c1', 360, 420, 'Start', 'Drive', 'Best version · 10 practice tracks', C.fast, -1], ['c2', 600, 420, 'Second model', 'Propose', 'Reads the laps · up to 16 edits', C.slow, -1],
+      ['c3', 840, 420, 'Checks', 'Run it', 'Must run on every track', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', 'Together · one out · alone', C.fast, 1],
+      ['c5', 600, 720, 'Reviewer model', 'Decide', 'Keeps or rejects, in writing', C.slow, 1], ['c6', 360, 720, 'Finish line', 'Drive again', '0.05 s faster: new best', C.faster, 1]];
     const T = (x, y, t, f, size, fill, anchor = 'start', extra = '') => `<text x="${x}" y="${y}" font-family='${f}' font-size="${size}" fill="${fill}" text-anchor="${anchor}" ${extra}>${esc(t)}</text>`;
     const kart = col => `<g><rect x="-15" y="-8" width="30" height="16" rx="3" fill="${col}"/><rect x="-4" y="-5" width="10" height="10" fill="#11161d"/><rect x="-13" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="5" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="-13" y="8" width="8" height="4" fill="#0b0f14"/><rect x="5" y="8" width="8" height="4" fill="#0b0f14"/><rect x="15" y="-5" width="3" height="10" fill="${C.chalk}"/></g>`;
     let s = `<svg viewBox="0 0 1200 840" class="sysvg" role="img" aria-label="Race Ahead system: run time and one round of evolution">
@@ -76,7 +86,7 @@
       <marker id="ab" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.best}"/></marker>
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>`;
     // ---- top straight: one section of a lap
-    s += T(20, 30, 'ON TRACK', F.px, 14, C.fast, 'start', 'letter-spacing="2"') + T(128, 30, '· ONE SECTION OF A LAP, EVERY SECTION', F.px, 14, C.c2, 'start', 'letter-spacing="2"') + T(1180, 30, 'SUPERTUXKART · TIME TRIAL', F.px, 11, C.c3, 'end', 'letter-spacing="2"');
+    s += T(20, 30, 'ON TRACK', F.px, 14, C.fast, 'start', 'letter-spacing="2"') + T(128, 30, '· EVERY PART OF A LAP', F.px, 14, C.c2, 'start', 'letter-spacing="2"') + T(1180, 30, 'SUPERTUXKART', F.px, 11, C.c3, 'end', 'letter-spacing="2"');
     s += `<rect x="0" y="170" width="1200" height="44" fill="#1a222c"/><path d="M0 170H1200M0 214H1200" stroke="#3a4757" stroke-width="2"/><path d="M0 192H1200" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
     GATES.forEach(([id, k, t, sub, col, tag], i) => {
       const x = gx[i];
@@ -90,10 +100,10 @@
     });
     s += `<g class="kart">${kart(C.fast)}${still ? '' : '<animateMotion dur="7s" repeatCount="indefinite" path="M-60 192H1260"/>'}</g>`;
     // links between the bands: lap logs feed the loop; the loop rewrites the three harness files
-    s += `<path d="M1090 228V296" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#ag)"/>${T(1076, 292, 'LAP LOGS FEED THE LOOP', F.px, 10, C.c3, 'end', 'letter-spacing="1"')}`;
+    s += `<path d="M1090 228V296" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="6 6" marker-end="url(#ag)"/>${T(1076, 292, 'LAP RECORDS FEED THE LOOP', F.px, 10, C.c3, 'end', 'letter-spacing="1"')}`;
     s += `<path d="M600 286V252M306 252H894" fill="none" stroke="${C.slow}" stroke-width="2" stroke-dasharray="6 6"/>` +
       [306, 502, 894].map(x => `<path d="M${x} 252V232" stroke="${C.slow}" stroke-width="2" marker-end="url(#au)"/>`).join('') +
-      T(612, 278, 'THE HARNESS IS REWRITTEN BETWEEN LAPS', F.px, 10, C.slow, 'start', 'letter-spacing="1"');
+      T(612, 278, 'THE THREE FILES ARE REWRITTEN BETWEEN LAPS', F.px, 10, C.slow, 'start', 'letter-spacing="1"');
     // ---- the circuit: one round of evolution
     s += T(20, 300, 'BETWEEN LAPS', F.px, 14, C.slow, 'start', 'letter-spacing="2"') + T(178, 300, '· ONE ROUND', F.px, 14, C.c2, 'start', 'letter-spacing="2"');
     const track = 'M300 420H900A150 150 0 0 1 900 720H300A150 150 0 0 1 300 420Z';
@@ -101,14 +111,14 @@
       <path d="M900 382A188 188 0 0 1 900 758" fill="none" stroke="${C.chalk}" stroke-width="7" opacity=".85"/><path d="M900 382A188 188 0 0 1 900 758" fill="none" stroke="${C.slower}" stroke-width="7" stroke-dasharray="16 16"/>
       <path d="${track}" fill="none" stroke="#3a4757" stroke-width="50"/><path d="${track}" fill="none" stroke="#1a222c" stroke-width="44"/><path d="${track}" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
     for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) s += `<rect x="${128 + c * 7.4}" y="${563 + r * 7.4}" width="7.4" height="7.4" fill="${(r + c) % 2 ? C.chalk : '#0b0f14'}"/>`;
-    s += T(186, 560, 'NEW', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"') + T(186, 578, 'CHAMPION', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"');
+    s += T(186, 560, 'NEW BEST', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"') + T(186, 578, 'VERSION', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"');
     s += T(985, 586, '40', F.disp, 58, C.chalk, 'middle', 'font-weight="700"') + T(985, 608, 'ROUNDS', F.px, 11, C.c3, 'middle', 'letter-spacing="2"') + T(985, 626, 'OWN LAPS ONLY', F.px, 9, C.c3, 'middle', 'letter-spacing="1"');
     // infield: trial runs and the edit log feed the proposer; big redesigns go down the pit lane
     s += `<path d="M470 512C520 500 560 480 586 448" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ag)"/>
       <path d="M730 512C680 500 640 480 614 448" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ag)"/>
       <path d="M600 444V584M600 652V694" fill="none" stroke="${C.best}" stroke-width="3" marker-end="url(#ab)"/>`;
-    const IN = [['trial', 400, 530, 'Before proposing', 'Trial runs', 'Test a change on one section or lap', C.chalk], ['editlog', 800, 530, 'Memory', 'Edit log', 'Every past verdict and its reason', C.chalk],
-      ['branch', 600, 604, 'Pit lane', 'Development branch', 'Big redesigns, repaired for 4–10 rounds', C.best]];
+    const IN = [['trial', 400, 530, 'Before proposing', 'Try first', 'Test an idea on one section or lap', C.chalk], ['editlog', 800, 530, 'Memory', 'Past edits', 'Every decision and its reason', C.chalk],
+      ['branch', 600, 604, 'Pit lane', 'Big redesigns', 'Worked on aside for 4–10 rounds', C.best]];
     for (const [id, x, y, k, t, sub, col] of IN) s += `<g class="hot" data-tip="${id}" tabindex="0" role="button" aria-label="${esc(t)}">
       <rect x="${x - 120}" y="${y - 26}" width="240" height="${id === 'branch' ? 70 : 72}" rx="6" fill="${id === 'branch' ? 'rgba(180,108,255,.10)' : 'rgba(233,238,243,.03)'}" stroke="${id === 'branch' ? C.best : '#2e3a48'}" stroke-dasharray="${id === 'branch' ? '' : '5 5'}"/>
       ${T(x, y - 8, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, y + 16, t, F.disp, 22, col, 'middle', 'font-weight="600"')}${T(x, y + 34, sub, F.body, 12.5, C.c2, 'middle')}</g>`;
@@ -139,7 +149,7 @@
     svg.addEventListener('mouseleave', () => show(null)); document.addEventListener('click', () => show(null));
     // phone: the same stops as a list, details always visible
     const item = (id, col, k) => `<li style="--c:${col}"><small>${esc(k)}</small><b>${esc(TIPS[id][0])}</b><span>${esc(TIPS[id][1])}</span></li>`;
-    $('sysList').innerHTML = `<li class="h px">On track · one section</li>` + GATES.map(g => item(g[0], g[4] === C.c2 ? C.chalk : g[4], g[1])).join('') +
+    $('sysList').innerHTML = `<li class="h px">On track · every part of a lap</li>` + GATES.map(g => item(g[0], g[4] === C.c2 ? C.chalk : g[4], g[1])).join('') +
       `<li class="h px">Between laps · one round</li>` + ST.map(q => item(q[0], q[6] === C.c2 ? C.chalk : q[6], q[3])).join('') + IN.map(q => item(q[0], q[6], q[3])).join('');
   }
 
@@ -151,7 +161,7 @@
       <div class="bar"><button class="btn primary play">▶ Play all</button><button class="btn rst" aria-label="restart">↺</button>
       <select class="rate" aria-label="playback speed">${[1, 2, 4].map(r => `<option value="${r}"${r === (opt.rate || 1) ? ' selected' : ''}>${r}×</option>`).join('')}</select>
       <input class="scrub" type="range" min="0" max="${T.toFixed(2)}" step="0.01" value="0" aria-label="race time"><span class="clock mono">0.0 s</span></div>` +
-      (opt.chart ? `<div class="chart"><p class="px small">Speed along the lap <span>m/s over distance · dashed: 16 m/s, the starting speed</span></p><svg class="speed" viewBox="0 0 1000 260" role="img" aria-label="Speed against distance"></svg></div>` : '');
+      (opt.chart ? `<div class="chart"><p class="px small">Speed along the lap <span>m/s along the lap · dashed: 16 m/s, where the first version tops out</span></p><svg class="speed" viewBox="0 0 1000 260" role="img" aria-label="Speed against distance"></svg></div>` : '');
     const grid = root.querySelector('.grid'), cells = {};
     for (const id of ids) {
       const l = L[id], e = document.createElement('div'); e.className = 'lap';
@@ -215,13 +225,13 @@
 
   /* ---------- inside a round ---------- */
   const R = D.rounds;
-  const OUT = { adopted: ['changes kept', '--faster'], branch_merged: ['redesign merged', '--best'], nothing_admitted: ['nothing kept', '--chalk-3'], confirm_failed: ['kept changes failed the re-check', '--slower'],
+  const OUT = { adopted: ['edits kept', '--faster'], branch_merged: ['redesign joined', '--best'], nothing_admitted: ['nothing kept', '--chalk-3'], confirm_failed: ['kept edits failed the re-check', '--slower'],
     no_valid_proposal: ['no usable proposal', '--chalk-3'], branch_opened: ['bigger redesign started', '--slow'], branch_not_improved: ['redesign repaired, not faster yet', '--slow'], branch_improved: ['redesign improved', '--slow'],
     branch_merge_rejected: ['faster, but the reviewer refused the merge', '--chalk-2'], branch_merge_blocked: ['faster, held back to fix a flaw', '--chalk-2'] };
   const outLabel = o => (OUT[o.split('+')[0]] || [o.replace(/_/g, ' ')])[0] + (o.includes('+branch_dropped') ? ' · redesign dropped' : '');
   const kind = r => r.crash ? '--slower' : r.outcome === 'adopted' ? '--faster' : r.outcome === 'branch_merged' ? '--best' : r.branch ? '--slow' : '--chalk-3';
   let cur = R.findIndex(r => r.round === 15), focus = 's2_steer_body';
-  $('curveLegend').innerHTML = [['--faster', 'changes kept'], ['--best', 'bigger redesign merged'], ['--slow', 'working on a bigger redesign'], ['--slower', 'new version crashed'], ['--chalk-3', 'nothing kept']]
+  $('curveLegend').innerHTML = [['--faster', 'edits kept'], ['--best', 'bigger redesign joined'], ['--slow', 'working on a bigger redesign'], ['--slower', 'new version crashed'], ['--chalk-3', 'nothing kept']]
     .map(([c, t]) => `<span><i style="background:var(${c})"></i>${t}</span>`).join('');
   function curve() {
     const svg = $('curve'), W = Math.max(320, svg.getBoundingClientRect().width), H = W < 600 ? 200 : 230; svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.height = H + 'px'; svg.innerHTML = '';
@@ -250,27 +260,28 @@
     const good = s && (kind === 'without' ? v > 0 : v > 0), bad = s && !good;
     return `<div class="m"><span>${label}</span><b class="${good ? 'g' : bad ? 'r' : ''}">${txt}</b></div>`;
   };
-  const NOVALID = 'No usable proposal this round: the proposed changes were invalid, so nothing was driven on track.';
+  const plainWords = t => String(t || '').replace(/\bThe proposer\b/g, 'The system').replace(/\bthe proposer\b/g, 'the system').replace(/\bproposer\b/g, 'system');
+  const NOVALID = 'No usable proposal this round: the proposed edits were invalid, so nothing was driven on track.';
   function detail() {
     const r = R[cur], o = OUT[r.outcome.split('+')[0]] || [outLabel(r.outcome), r.branch ? '--slow' : '--chalk-3'];
     const d = r.new_s ? r.champion_s - r.new_s : null;
-    const times = r.new_s ? `Total time ${r.champion_s.toFixed(1)} → ${r.new_s.toFixed(1)} s · ${d.toFixed(1)} s faster` : r.crash ? 'The new version crashed, so nothing changed' : 'The champion stays the same';
-    const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : (r.plain || '');
+    const times = r.new_s ? `Total time ${r.champion_s.toFixed(1)} → ${r.new_s.toFixed(1)} s · ${d.toFixed(1)} s faster` : r.crash ? 'The new version crashed, so nothing changed' : 'The best version stays the same';
+    const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : plainWords(r.plain);
     const items = r.items.map(it => {
       const branchWork = it.all_s == null;
       const st = branchWork ? null : r.outcome === 'confirm_failed' ? ['Not kept', 'n'] : it.admitted === true ? ['Admitted', 'g'] : ['Rejected', 'r'];
       return `<div class="item${it.id === focus ? ' focus' : ''}${st ? ' ' + st[1] : ''}" data-id="${esc(it.id)}">
-        <div class="ih"><p class="chg">${esc(it.plain || it.id)}</p>${st ? `<span class="px st ${st[1]}">${st[0]}</span>` : ''}</div>
-        ${branchWork ? '' : `<div class="meas">${meas('All changes together', it.all_s, 'with')}${meas('Without this change', it.loo_s, 'without')}${meas('This change alone', it.alone_s, 'with')}</div>`}
-        ${it.plain_why && !branchWork ? `<p class="ver ${st[1]}"><span class="px">Reviewer</span>${esc(it.plain_why)}</p>` : ''}</div>`;
+        <div class="ih"><p class="chg">${esc(plainWords(it.plain) || it.id)}</p>${st ? `<span class="px st ${st[1]}">${st[0]}</span>` : ''}</div>
+        ${branchWork ? '' : `<div class="meas">${meas('All edits together', it.all_s, 'with')}${meas('Without this edit', it.loo_s, 'without')}${meas('This edit alone', it.alone_s, 'with')}</div>`}
+        ${it.plain_why && !branchWork ? `<p class="ver ${st[1]}"><span class="px">Reviewer</span>${esc(plainWords(it.plain_why))}</p>` : ''}</div>`;
     }).join('');
-    const record = (r.hypothesis ? `<p><b>Proposer's hypothesis.</b> ${esc(r.hypothesis)}</p>` : '') + r.items.map(it => `<div class="rec"><p class="mono">${esc(it.id)} · ${esc(it.part)}</p>
+    const record = (r.hypothesis ? `<p><b>Second model's hypothesis.</b> ${esc(r.hypothesis)}</p>` : '') + r.items.map(it => `<div class="rec"><p class="mono">${esc(it.id)} · ${esc(it.part)}</p>
         ${it.rationale ? `<p><b>Rationale.</b> ${esc(it.rationale)}</p>` : ''}${it.verdict ? `<p><b>Reviewer.</b> ${esc(it.verdict)}</p>` : ''}${it.diff ? `<pre>${esc(it.diff)}</pre>` : ''}</div>`).join('');
     $('rDetail').innerHTML = `<div class="rh"><h3 class="px" style="color:var(${r.crash ? '--slower' : o[1]})">Round ${r.round} · ${esc(o[0])}</h3><span>${times}</span></div>
-      ${r.outcome === 'confirm_failed' ? `<div class="alert"><span class="px">Re-check</span> The reviewer's choice was driven again as a whole and was not faster than the champion, so nothing was kept.</div>` : ''}
-      ${r.crash ? `<div class="alert"><span class="px">Crash</span> The new version failed on ${r.crash_tracks} of 10 tracks. The error goes back to the proposer for the next round.</div>` : ''}
-      <p class="noticed"><span class="px y">What the proposer saw and tried</span>${esc(noticed)}</p>
-      ${items ? `<p class="px sub">The changes${r.items.some(it => it.all_s == null) ? ' <span>work on a development branch: judged together when the branch asks to merge</span>' : ' <span>each one driven on all 10 training tracks</span>'}</p><div class="items">${items}</div>` : ''}
+      ${r.outcome === 'confirm_failed' ? `<div class="alert"><span class="px">Re-check</span> The reviewer's choice was driven again as a whole and was not faster than the best version, so nothing was kept.</div>` : ''}
+      ${r.crash ? `<div class="alert"><span class="px">Crash</span> The new version failed on ${r.crash_tracks} of 10 tracks. The error message goes back to the second model for the next round.</div>` : ''}
+      <p class="noticed"><span class="px y">What the second model saw and tried</span>${esc(noticed)}</p>
+      ${items ? `<p class="px sub">The edits${r.items.some(it => it.all_s == null) ? ' <span>work on a big redesign aside: judged together when it asks to join</span>' : ' <span>each one driven on all 10 practice tracks</span>'}</p><div class="items">${items}</div>` : ''}
       ${record ? `<details class="record"><summary class="px">Full record: the models' own words and the code</summary>${record}</details>` : ''}`;
   }
   curve(); detail();
@@ -303,7 +314,7 @@
     const rows = b.rounds.map(([r, c, crash, o]) => `<div class="row"><span>Round ${r} · ${esc(outLabel(o))}</span><span class="mono" style="color:${crash ? 'var(--slower)' : ''}">${crash ? `crashed on ${(R.find(q => q.round === r) || {}).crash_tracks ?? '?'} of 10 tracks` : c != null && c < 2000 ? 'total ' + c.toFixed(1) + ' s' : '—'}</span></div>`).join('');
     const champ = (R.find(r => r.round === b.opened) || {}).champion_s;
     $('bDetail').innerHTML = `<div class="rh"><h3 class="px" style="color:var(${endCol})">${endTxt}</h3><span>started in round ${b.opened}${champ ? ` · the best version then: ${champ.toFixed(1)} s` : ''}</span></div>
-      <p class="noticed"><span class="px y">What the redesign tried</span>${esc((R.find(r => r.round === b.opened) || {}).plain || '')}</p>
+      <p class="noticed"><span class="px y">What the redesign tried</span>${esc(plainWords((R.find(r => r.round === b.opened) || {}).plain))}</p>
       <p class="px sub">Round by round</p>${rows}`;
   }
   lineage();
@@ -314,25 +325,25 @@
     for (const tk of [500, 700, 900, 1100]) { el('line', { x1: Lm, x2: W - Rm, y1: y(tk), y2: y(tk), stroke: css('--rule'), 'stroke-dasharray': '2 4' }, svg); el('text', { x: Lm - 8, y: y(tk) + 4, 'text-anchor': 'end', fill: css('--chalk-3'), 'font-size': 12, 'font-family': css('--f-data') }, svg).textContent = tk; }
     for (const tk of [0, 10, 20, 30, 40]) el('text', { x: x(tk), y: H - 12, 'text-anchor': 'middle', fill: css('--chalk-3'), 'font-size': 12, 'font-family': css('--f-data') }, svg).textContent = tk;
     el('line', { x1: Lm, x2: W - Rm, y1: y(res.oracle_train_s), y2: y(res.oracle_train_s), stroke: css('--oracle'), 'stroke-dasharray': '6 4' }, svg);
-    el('text', { x: W - Rm, y: y(res.oracle_train_s) + 16, 'text-anchor': 'end', fill: css('--oracle'), 'font-size': 11, 'font-family': css('--f-pixel') }, svg).textContent = `ORACLE ${res.oracle_train_s.toFixed(0)} S`;
+    el('text', { x: W - Rm, y: y(res.oracle_train_s) + 16, 'text-anchor': 'end', fill: css('--oracle'), 'font-size': 11, 'font-family': css('--f-pixel') }, svg).textContent = `GAME'S OWN AI ${res.oracle_train_s.toFixed(0)} S`;
     const cs = { 'crude 1': css('--fast'), 'crude 2': css('--slow'), 'crude 3': css('--best') }, cap = $('gRoundsCap'), base = cap.textContent, paths = [];
     for (const r of runs) {
       const d = r.curve.map((v, k) => (k ? `H${x(k)}V${y(v)}` : `M${x(0)},${y(v)}`)).join(''), shown = r.start === 'crude 2' && r.seed === 's1';
       const p = el('path', { d, fill: 'none', stroke: cs[r.start], 'stroke-width': shown ? 3 : 1.8, 'stroke-opacity': .9, style: 'cursor:pointer' }, svg); paths.push(p);
       const hit = el('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 12, style: 'cursor:pointer' }, svg);
-      el('title', {}, hit).textContent = `${r.start} ${r.seed}: ${r.start_train_s.toFixed(0)} → ${r.train_s.toFixed(0)} s`;
-      hit.addEventListener('mouseenter', () => { paths.forEach(q => q.setAttribute('stroke-opacity', q === p ? 1 : .2)); cap.textContent = `${r.start}, seed ${r.seed.slice(1)}: ${r.start_train_s.toFixed(1)} → ${r.train_s.toFixed(1)} s on the training tracks; ${r.start_test_s.toFixed(0)} → ${r.test_s.toFixed(0)} s on the unseen tracks (${Math.floor(r.gap_closed * 100)} % of the gap closed).` + (shown ? ' This is the run shown on this page.' : ''); });
+      el('title', {}, hit).textContent = `${startName(r.start)}, ${repeatName(r.seed)}: ${r.start_train_s.toFixed(0)} → ${r.train_s.toFixed(0)} s`;
+      hit.addEventListener('mouseenter', () => { paths.forEach(q => q.setAttribute('stroke-opacity', q === p ? 1 : .2)); cap.textContent = `${startName(r.start)}, ${repeatName(r.seed)}: ${r.start_train_s.toFixed(1)} → ${r.train_s.toFixed(1)} s on the practice tracks; ${r.start_test_s.toFixed(0)} → ${r.test_s.toFixed(0)} s on the tracks it never practiced on (${Math.floor(r.gap_closed * 100)} % of the distance to the game's own AI closed).` + (shown ? ' This is the run shown on this page.' : ''); });
       hit.addEventListener('mouseleave', () => { paths.forEach(q => q.setAttribute('stroke-opacity', .9)); cap.textContent = base; });
     }
-    Object.entries(cs).forEach(([k, c], i) => el('text', { x: x(27), y: T + 16 + i * 16, fill: c, 'font-size': 11, 'font-family': css('--f-pixel') }, svg).textContent = k.toUpperCase());
+    Object.entries(cs).forEach(([k, c], i) => el('text', { x: x(27), y: T + 16 + i * 16, fill: c, 'font-size': 11, 'font-family': css('--f-pixel') }, svg).textContent = startName(k).toUpperCase());
   }
   {
     const svg = $('gGap'), W = 440, H = 360, Lm = 78, Rm = 46, T = 14, rowH = (H - T - 34) / runs.length, x = v => Lm + (W - Lm - Rm) * v;
     for (const v of [0, .5, 1]) { el('line', { x1: x(v), x2: x(v), y1: T, y2: H - 30, stroke: css('--rule'), 'stroke-dasharray': '2 4' }, svg); el('text', { x: x(v), y: H - 12, 'text-anchor': 'middle', fill: css('--chalk-3'), 'font-size': 12, 'font-family': css('--f-data') }, svg).textContent = (v * 100) + '%'; }
     runs.forEach((r, i) => {
-      const yy = T + i * rowH, inMain = r.test_s < 230, c = css(inMain ? '--fast' : '--ghost'), g = el('g', {}, svg);
-      el('title', {}, g).textContent = `${r.start} ${r.seed}: ${r.start_test_s.toFixed(1)} → ${r.test_s.toFixed(1)} s on the unseen tracks (oracle ${res.oracle_test_s.toFixed(1)} s)`;
-      el('text', { x: Lm - 10, y: yy + rowH * .62, 'text-anchor': 'end', fill: css('--chalk-2'), 'font-size': 11, 'font-family': css('--f-pixel') }, g).textContent = `${r.start.replace('crude ', 'C')} ${r.seed.toUpperCase()}`;
+      const yy = T + i * rowH, c = css('--fast'), g = el('g', {}, svg);
+      el('title', {}, g).textContent = `${startName(r.start)}, ${repeatName(r.seed)}: ${r.start_test_s.toFixed(1)} → ${r.test_s.toFixed(1)} s on the tracks it never practiced on (game's own AI ${res.oracle_test_s.toFixed(1)} s)`;
+      el('text', { x: Lm - 10, y: yy + rowH * .62, 'text-anchor': 'end', fill: css('--chalk-2'), 'font-size': 11, 'font-family': css('--f-pixel') }, g).textContent = `${startName(r.start).replace('Start ', '')}${r.seed.replace(/\D/g, '')}`;
       el('rect', { x: x(0), y: yy + rowH * .18, width: x(r.gap_closed) - x(0), height: rowH * .64, fill: c }, g);
       el('text', { x: x(r.gap_closed) + 6, y: yy + rowH * .64, fill: c, 'font-size': 12, 'font-family': css('--f-data') }, g).textContent = Math.floor(r.gap_closed * 100) + '%';
     });

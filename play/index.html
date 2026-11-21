@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Race the Champion</title>
-<meta name="description" content="Drive a kart against the frozen champion harness of Race Ahead on a track it never trained on.">
+<title>Race Our AI</title>
+<meta name="description" content="Drive a kart against the AI of Race Ahead, frozen after 40 rounds of rewriting its own driving program, on a track it never practiced on.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27 shape-rendering=%27crispEdges%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%2311161d%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%2338d0e2%27/%3E%3Crect x=%271%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3Crect x=%275%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="../fonts/fonts.css">
 <link rel="stylesheet" href="play.css?v=5">
@@ -27,7 +27,7 @@
 
   <aside class="pip">
     <div class="pipv"><video id="pip" muted playsinline preload="auto" src="../media/cc-r40.mp4"></video>
-      <span class="tag px">Champion · frozen</span></div>
+      <span class="tag px">Our AI · frozen</span></div>
     <div class="dec">
       <p class="lbl px" id="dSec">Jev's answers</p>
       <div class="chips" id="dChips"></div>
@@ -45,10 +45,10 @@
   <div class="count px" id="count"></div>
 
   <div class="panel" id="intro">
-    <p class="kicker px">Race the champion</p>
-    <h1>Can you beat a harness that taught itself to drive?</h1>
-    <p>Cornfield Crossing is one of the four tracks the system <b>never trained on</b>. The <b class="red">red kart</b> is our champion after 40 rounds of self-improvement, frozen: it drives exactly the lap it recorded, <b id="iLap">56.9 s</b>. The small window shows that lap in the game and the answers its driver gave.</p>
-    <p>Same track, same kart as the AI drives in the game. Your kart has the game kart's top speed (25 m/s), acceleration and turning circle; no drifting, no nitro. Leave the road and you slow down. You drive the <b class="blue">blue kart</b>. Reach the finish line before the champion does.</p>
+    <p class="kicker px">Race our AI</p>
+    <h1>Can you beat an AI that taught itself to drive?</h1>
+    <p>The <b class="red">red kart</b> is our AI: the best version of its driving program after 40 rounds of rewriting it, now frozen. Cornfield Crossing is one of the tracks it <b>never practiced on</b>. It drives exactly the lap it recorded there, <b id="iLap">56.9 s</b>; the small window shows that lap in the game and the answers its driver gave.</p>
+    <p>You drive the <b class="blue">blue kart</b>: the same kart on the same track, with the game kart's top speed (25 m/s), acceleration and turning circle; no drifting, no nitro. Leave the road and you slow down. Reach the finish line before the red kart does.</p>
     <div class="keys"><span><kbd>↑</kbd><kbd>W</kbd> throttle</span><span><kbd>↓</kbd><kbd>S</kbd> brake</span><span><kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd> steer</span><span><kbd>R</kbd> back on the road</span></div>
     <button class="go" id="start">Start the race</button>
     <p class="small" id="best"></p>
@@ -63,6 +63,6 @@
   </div>
 </div>
 <script src="track.js?v=1"></script>
-<script type="module" src="play.js?v=11"></script>
+<script type="module" src="play.js?v=12"></script>
 </body>
 </html>

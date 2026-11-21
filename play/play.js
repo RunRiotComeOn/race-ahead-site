@@ -488,16 +488,16 @@ function finish() {
   const oracle = P.oracle_s;
   if (won) {
     const prev = readBest(); if (!prev || me.done < prev) saveBest(me.done);
-    $('rText').innerHTML = `You beat the frozen champion by <b>${(LAP - me.done).toFixed(2)} s</b>.` +
+    $('rText').innerHTML = `You beat our AI by <b>${(LAP - me.done).toFixed(2)} s</b>.` +
       (oracle && me.done < oracle ? ' You were faster than the game\'s own AI too.' : ` The game's own AI, which knows the track, needs ${oracle.toFixed(1)} s.`);
   } else {
     const left = Math.max(0, FINISH - me.prog);
-    $('rText').innerHTML = `The champion crossed the line while you still had <b>${left.toFixed(0)} m</b> to go. It learned this pace from its own laps on other tracks; this one is new to it.`;
+    $('rText').innerHTML = `Our AI crossed the line while you still had <b>${left.toFixed(0)} m</b> to go. It learned to drive like this from its own laps on other tracks; this one is new to it.`;
   }
   $('rTimes').innerHTML =
     `<tr class="you"><td>You</td><td>${won ? me.done.toFixed(2) + ' s' : 'not finished'}</td></tr>` +
-    `<tr class="ch"><td>Champion (frozen, round 40)</td><td>${LAP.toFixed(2)} s</td></tr>` +
-    (oracle ? `<tr class="or"><td>Game AI (privileged, for reference)</td><td>${oracle.toFixed(2)} s</td></tr>` : '');
+    `<tr class="ch"><td>Our AI (frozen after 40 rounds)</td><td>${LAP.toFixed(2)} s</td></tr>` +
+    (oracle ? `<tr class="or"><td>The game's own AI (knows the track; for reference)</td><td>${oracle.toFixed(2)} s</td></tr>` : '');
   $('result').classList.remove('hide'); showBest();
   setTimeout(() => $('again').focus(), 50);
 }
