@@ -7,7 +7,7 @@
 <meta name="description" content="Drive a kart against the frozen champion harness of Race Ahead on a track it never trained on.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27 shape-rendering=%27crispEdges%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%2311161d%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%2338d0e2%27/%3E%3Crect x=%271%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3Crect x=%275%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="../fonts/fonts.css">
-<link rel="stylesheet" href="play.css?v=1">
+<link rel="stylesheet" href="play.css?v=2">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}</script>
 </head>
 <body>
@@ -52,6 +52,7 @@
     <div class="keys"><span><kbd>↑</kbd><kbd>W</kbd> throttle</span><span><kbd>↓</kbd><kbd>S</kbd> brake</span><span><kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd> steer</span><span><kbd>R</kbd> back on the road</span></div>
     <button class="go" id="start">Start the race</button>
     <p class="small" id="best"></p>
+    <p class="credit">Track and scenery: <a href="https://supertuxkart.net">SuperTuxKart</a>, Cornfield Crossing by Jean-Manuel Clémençon, CC-BY-SA 4.0, and models from the SuperTuxKart library (see <code>scenery/LICENSE.txt</code>).</p>
   </div>
 
   <div class="panel hide" id="result">
@@ -62,6 +63,6 @@
   </div>
 </div>
 <script src="track.js?v=1"></script>
-<script type="module" src="play.js?v=1"></script>
+<script type="module" src="play.js?v=2"></script>
 </body>
 </html>

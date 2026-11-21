@@ -1,0 +1,39 @@
+Scenery of the playable race: geometry and textures converted from SuperTuxKart 1.5 data
+(https://supertuxkart.net) by scripts/evolve/play_scenery.py of the Race Ahead repository. The converted files
+(scenery.bin, scenery.json, tex/) are shared under CC-BY-SA 4.0; the sources and their authors:
+
+cornfield_crossing: License: CC-BY-SA 4.0; Copyright: Copyright 2017 Jean-Manuel Clémençon
+stk_combineHarvester_a: License: CC-BY-SA 4.0; Copyright: Copyright 2016, 2017 Jean-Manuel Clémençon
+stklib_agave_a: License: CC-BY-SA 4.0; Copyright: Copyright 2015 Jean-Manuel Clémençon
+stklib_airConditioner_a: License: CC-BY-SA 4.0; Copyright: Copyright 2015 Jean-Manuel Clémençon
+stklib_animalPig_a: License: CC-BY-SA 4.0; Copyright:
+stklib_armchair_a: License: CC-BY-SA 4.0; Copyright: Copyright 2014 Jean-Manuel Clémençon
+stklib_autumnSmallBush_a: License: CC-BY-SA 4.0; Copyright: Copyright 2016 Jean-Manuel Clémençon
+stklib_autumnTree_a: License: CC-BY-SA 4.0; Copyright: Copyright 2016 Jean-Manuel Clémençon
+stklib_bigAirBlower_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_cabbage_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_carrot_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_cattail_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_chimney_b: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_cornPlant_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_fitchBarrel_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_giantPlasticBag_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_greenRadioTower_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_hayBall_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_logBarrier_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_loudspeaker_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_mailbox_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_mineLantern_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_oldCar_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_oldschoolLamp_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_pallet_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_pinetree_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_pumpkin_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_ranchPortal_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_sagebrush_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_stkVertical_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_trainSemaphore_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_waterLily_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_weatherCock_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_windpump_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)
+stklib_woodLittleBridge_a: no licenses.txt in the folder; see SuperTuxKart data/CREDITS (SuperTuxKart media library)

@@ -4,7 +4,15 @@
 // full-lock turning radius by speed (dualbrain.timetrial.TURN_RADIUS); no drift, no nitro, slow off the road.
 import * as THREE from 'three';
 
-const P = window.PLAY, C = P.centre, N = C.length, L = P.length, G = P.ghost, LAP = P.lap_s;
+const P = window.PLAY;
+// The engine is left-handed, three.js right-handed: mirror x (scenery/ is exported mirrored too); the lateral offset flips.
+if (!P.mirrored) {
+  for (const q of P.quads) for (const v of q) v[0] = -v[0];
+  for (const c of P.centre) c[0] = -c[0];
+  for (const g of P.ghost) g[2] = -g[2];
+  P.mirrored = true;
+}
+const C = P.centre, N = C.length, L = P.length, G = P.ghost, LAP = P.lap_s;
 const $ = id => document.getElementById(id);
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const lerp = (a, b, t) => a + (b - a) * t;
@@ -150,6 +158,7 @@ function mesh(pos, col, idx, mat) {
   return new THREE.Mesh(g, mat);
 }
 const Q = P.quads;
+const standin = new THREE.Group(); scene.add(standin);    // simple scenery, replaced by the real track once it loads
 { // road, kerbs, verges
   const road = [], ri = [], kerb = [], kc = [], ki = [], verge = [], vi = [], vc = [];
   const red = new THREE.Color('#d8463a'), white = new THREE.Color('#eef0f2');
@@ -168,11 +177,11 @@ const Q = P.quads;
       const gc = grass[n % 2]; for (let i = 0; i < 4; i++) vc.push(gc.r, gc.g, gc.b);
     }
   });
-  scene.add(mesh(road, null, ri, new THREE.MeshLambertMaterial({ color: '#50555d', side: THREE.DoubleSide })));
-  scene.add(mesh(kerb, kc, ki, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })));
+  standin.add(mesh(road, null, ri, new THREE.MeshLambertMaterial({ color: '#50555d', side: THREE.DoubleSide })));
+  standin.add(mesh(kerb, kc, ki, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })));
   const vm = mesh(verge, vc, vi, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide,
     polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2 }));
-  scene.add(vm);
+  standin.add(vm);
   // centre dashes
   const dash = [], di = [];
   for (let s = 4; s < L; s += 9) {
@@ -181,10 +190,10 @@ const Q = P.quads;
     dash.push(a.x + nx, a.y + .04, a.z + nz, a.x - nx, a.y + .04, a.z - nz, b.x - nx, b.y + .04, b.z - nz, b.x + nx, b.y + .04, b.z + nz);
     di.push(bb, bb + 1, bb + 2, bb, bb + 2, bb + 3);
   }
-  scene.add(mesh(dash, null, di, new THREE.MeshBasicMaterial({ color: '#d9d4c4', side: THREE.DoubleSide })));
+  standin.add(mesh(dash, null, di, new THREE.MeshBasicMaterial({ color: '#d9d4c4', side: THREE.DoubleSide })));
   let minY = Infinity; for (const c of C) minY = Math.min(minY, c[1]);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshLambertMaterial({ color: '#7d8a3c' }));
-  ground.rotation.x = -Math.PI / 2; ground.position.y = minY - 6; scene.add(ground);
+  ground.rotation.x = -Math.PI / 2; ground.position.y = minY - 6; standin.add(ground);
 }
 { // the cornfield: instanced stalks, kept off every part of the road
   const grid = new Map(), cell = 12, key = (x, z) => `${Math.floor(x / cell)},${Math.floor(z / cell)}`;
@@ -209,7 +218,7 @@ const Q = P.quads;
     m4.makeScale(1, 1.8 * p[3] + .6, 1); m4.setPosition(p[0], p[1], p[2]); im.setMatrixAt(i, m4);
     im.setColorAt(i, col.set(pal[i % pal.length]));
   });
-  scene.add(im);
+  standin.add(im);
 }
 { // start / finish line and gantry
   const cv = document.createElement('canvas'); cv.width = 16; cv.height = 2; const cx = cv.getContext('2d');
@@ -219,15 +228,52 @@ const Q = P.quads;
   const yaw = Math.PI / 2 - Math.atan2(f.tz, f.tx);     // local +z along the track
   const lg = new THREE.PlaneGeometry(w, 1.6); lg.rotateX(-Math.PI / 2);
   const line = new THREE.Mesh(lg, new THREE.MeshBasicMaterial({ map: tex }));
-  line.position.set(f.x, f.y + .05, f.z); line.rotation.y = yaw; scene.add(line);
+  line.position.set(f.x, f.y + .05, f.z); line.rotation.y = yaw; standin.add(line);
   const mat = new THREE.MeshLambertMaterial({ color: '#2a3542' });
   for (const sd of [-1, 1]) {
     const post = new THREE.Mesh(new THREE.BoxGeometry(.5, 6, .5), mat);
-    post.position.set(f.x + sd * (w / 2 + 1.4) * f.tz, f.y + 3, f.z - sd * (w / 2 + 1.4) * f.tx); scene.add(post);
+    post.position.set(f.x + sd * (w / 2 + 1.4) * f.tz, f.y + 3, f.z - sd * (w / 2 + 1.4) * f.tx); standin.add(post);
   }
   const banner = new THREE.Mesh(new THREE.BoxGeometry(w + 3.4, 1.1, .4), new THREE.MeshLambertMaterial({ color: '#38d0e2' }));
-  banner.position.set(f.x, f.y + 5.6, f.z); banner.rotation.y = yaw; scene.add(banner);
+  banner.position.set(f.x, f.y + 5.6, f.z); banner.rotation.y = yaw; standin.add(banner);
 }
+// the real track: every model of the track's scene, merged by texture (scripts/evolve/play_scenery.py; CC-BY-SA 4.0)
+async function loadScenery() {
+  try {
+    const meta = await fetch('scenery/scenery.json').then(r => r.json());
+    const res = await fetch('scenery/scenery.bin'); if (!res.ok) throw new Error(res.status);
+    const total = +res.headers.get('content-length') || 0, reader = res.body.getReader(), chunks = []; let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read(); if (done) break;
+      chunks.push(value); got += value.length;
+      if (total) startBtn.textContent = `Loading the track… ${Math.round(got / total * 100)}%`;
+    }
+    const bin = new Uint8Array(got); { let o = 0; for (const c of chunks) { bin.set(c, o); o += c.length; } }
+    const real = new THREE.Group(), loader = new THREE.TextureLoader();
+    for (const m of meta.materials) {
+      const g = new THREE.BufferGeometry();
+      const B = bin.buffer;
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(B, m.pos, m.n * 3), 3));
+      g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(B, m.uv, m.n * 2), 2));
+      g.setAttribute('color', new THREE.BufferAttribute(new Uint8Array(B, m.col, m.n * 3), 3, true));
+      g.setIndex(new THREE.BufferAttribute(new Uint32Array(B, m.idx, m.m), 1));
+      g.computeVertexNormals();
+      const opt = { vertexColors: true, side: m.alpha ? THREE.DoubleSide : THREE.FrontSide };
+      if (m.tex) {
+        const t = loader.load('scenery/' + m.tex); t.flipY = false; t.colorSpace = THREE.SRGBColorSpace;
+        t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; opt.map = t;
+        if (m.alpha) opt.alphaTest = .5;
+      }
+      real.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial(opt)));
+    }
+    scene.add(real); standin.visible = false;
+    scene.fog.near = 120; scene.fog.far = 520; camera.far = 900; camera.updateProjectionMatrix();
+  } catch (e) { console.warn('scenery not loaded, keeping the simple one', e); }
+  startBtn.disabled = false; startBtn.textContent = 'Start the race';
+}
+const startBtn = $('start'); startBtn.disabled = true; startBtn.textContent = 'Loading the track…';
+loadScenery();
+
 function makeKart(body, ghost) {
   const g = new THREE.Group(), o = ghost ? { transparent: true, opacity: .72 } : {};
   const M = c => new THREE.MeshLambertMaterial({ color: c, ...o });
@@ -319,7 +365,7 @@ const KEYMAP = { ArrowUp: 'gas', KeyW: 'gas', ArrowDown: 'brake', KeyS: 'brake',
 addEventListener('keydown', e => {
   if (KEYMAP[e.code]) { keys[KEYMAP[e.code]] = 1; e.preventDefault(); }
   else if (e.code === 'KeyR' && state === 'race' && t > T0) rescue();
-  else if ((e.code === 'Enter' || e.code === 'Space') && state !== 'race') { e.preventDefault(); start(); }
+  else if ((e.code === 'Enter' || e.code === 'Space') && state !== 'race' && !startBtn.disabled) { e.preventDefault(); start(); }
 });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) keys[KEYMAP[e.code]] = 0; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = 0; });
