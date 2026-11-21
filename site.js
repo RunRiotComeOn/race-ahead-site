@@ -1,4 +1,4 @@
-// Race Ahead project page: every graphic is drawn here from the demo's data (demo/data.js) and the recorded laps
+// Race Ahead project page: every graphic is drawn here from the run's data (data.js) and the recorded laps
 // (laps.js: zengarden stages, laps-unseen.js: snowmountain). Videos are game footage only.
 (() => {
   const D = window.EVOLVE_DEMO, $ = id => document.getElementById(id);
