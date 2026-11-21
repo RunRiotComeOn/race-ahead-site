@@ -20,7 +20,6 @@ match the records. The 2:30 demo video is linked, not embedded.
   `race-ahead-demo.mp4` (the video).
 - Host the folder as is (GitHub Pages from the repository root; `.nojekyll` keeps every file as is) or serve it with any
   static server, e.g. `python3 -m http.server`.
-- This repository holds the built site only. It is generated in the code repository
-  ([car-racing-with-continual-learning](https://github.com/RunRiotComeOn/car-racing-with-continual-learning)) by
+- This repository holds the built site only. It is generated in the project's code repository (not public yet) by
   `sh scripts/build_site.sh` (copies `web/evolve/data.js`) or `sh scripts/build_site.sh --media` (also the media) into its `site/`
   folder, then copied here: `rsync -a --delete --exclude .git --exclude .nojekyll --exclude .gitignore --exclude README.md --exclude .DS_Store <code repo>/site/ ./`.
