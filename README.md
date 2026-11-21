@@ -14,7 +14,8 @@ match the records. The 2:30 demo video is linked, not embedded.
   kart's top speed, acceleration and turning radius, plus a grip limit set so that an autopilot laps in about 55.9 s
   (champion 56.9 s, game AI 54.0 s). three.js is loaded from jsDelivr. `play/scenery/` is the track's real scenery
   (every model of its scene.xml, merged by texture) from `scripts/evolve/play_scenery.py`; it is SuperTuxKart art under
-  CC-BY-SA 4.0 with the authors in `play/scenery/LICENSE.txt`.
+  CC-BY-SA 4.0 with the authors in `play/scenery/LICENSE.txt`.; `play/kart/` is the game's Tux kart (the one the system
+  drives), the player's copy recoloured blue (`--kart tux`).
 - `media/`: `lap-*.mp4` (zengarden), `sm-*.mp4` (snowmountain), `cc-r40.mp4` (cornfield_crossing, for `play/`),
   `race-ahead-demo.mp4` (the video).
 - Host the folder as is (GitHub Pages from the repository root; `.nojekyll` keeps every file as is) or serve it with any

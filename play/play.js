@@ -148,7 +148,8 @@ const SKY = new THREE.Color('#9fc8e4');
 scene.background = SKY; scene.fog = new THREE.Fog(SKY, 70, 300);
 scene.add(new THREE.HemisphereLight('#e8f3ff', '#5a5130', 1.15));
 const sun = new THREE.DirectionalLight('#fff1d2', 1.5); sun.position.set(80, 140, 50); scene.add(sun);
-const camera = new THREE.PerspectiveCamera(66, 1, .3, 600);
+const hemi = scene.children.find(o => o.isHemisphereLight);
+const camera = new THREE.PerspectiveCamera(72, 1, .2, 600);
 
 function mesh(pos, col, idx, mat) {
   const g = new THREE.BufferGeometry();
@@ -267,7 +268,19 @@ async function loadScenery() {
       real.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial(opt)));
     }
     scene.add(real); standin.visible = false;
-    scene.fog.near = 120; scene.fog.far = 520; camera.far = 900; camera.updateProjectionMatrix();
+    camera.far = 1500; camera.updateProjectionMatrix();
+    // the track's own sky box, sun, ambient light and fog (scene.xml)
+    if (meta.sky) {
+      const [top, bottom, east, west, south, north] = meta.sky.map(u => 'scenery/' + u);
+      const cube = new THREE.CubeTextureLoader().load([east, west, top, bottom, north, south]);
+      cube.colorSpace = THREE.SRGBColorSpace; scene.background = cube;
+    }
+    if (meta.sun) {
+      const S = meta.sun, col = c => new THREE.Color(c[0] / 255, c[1] / 255, c[2] / 255);
+      sun.color = col(S.diffuse); sun.intensity = 3.2; sun.position.set(...S.xyz).normalize().multiplyScalar(200);
+      scene.remove(hemi); scene.add(new THREE.AmbientLight(col(S.ambient).multiplyScalar(2.2), 1.6));
+      if (S.fog) scene.fog = new THREE.Fog(col(S.fog_color), S.fog_start, S.fog_start + (S.fog_end - S.fog_start) / S.fog_max);
+    }
   } catch (e) { console.warn('scenery not loaded, keeping the simple one', e); }
   startBtn.disabled = false; startBtn.textContent = 'Start the race';
 }
@@ -286,8 +299,41 @@ function makeKart(body, ghost) {
   box(1.4, .12, .3, 0, .62, -1.05, '#20262e');        // rear wing
   return g;
 }
-const youKart = makeKart('#ffb23e', false), champKart = makeKart('#38d0e2', true);
+const youKart = new THREE.Group(), champKart = new THREE.Group();
+youKart.add(makeKart('#3b7bff', false)); champKart.add(makeKart('#e0443a', false));
 scene.add(youKart, champKart);
+// the game's kart (Tux, rest pose): the champion in its own colours, the player recoloured blue (play_scenery.py --kart)
+async function loadKart() {
+  try {
+    const meta = await fetch('kart/kart.json').then(r => r.json());
+    const bin = await fetch('kart/kart.bin').then(r => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); });
+    const loader = new THREE.TextureLoader(), texCache = {};
+    const tex = u => texCache[u] || (texCache[u] = Object.assign(loader.load('kart/' + u), { flipY: false, colorSpace: THREE.SRGBColorSpace }));
+    const part = (m, alt) => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(bin, m.pos, m.n * 3), 3));
+      g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(bin, m.uv, m.n * 2), 2));
+      g.setIndex(new THREE.BufferAttribute(new Uint32Array(bin, m.idx, m.m), 1)); g.computeVertexNormals();
+      const map = m.tex ? tex(alt && m.alt ? m.alt : m.tex) : null;
+      return new THREE.Mesh(g, new THREE.MeshLambertMaterial({ map, color: map ? '#ffffff' : '#888888' }));
+    };
+    const build = alt => {
+      const k = new THREE.Group(); for (const m of meta.body) k.add(part(m, alt));
+      k.wheels = meta.wheels.map(w => {
+        const steer = new THREE.Group(), spin = new THREE.Group(); steer.position.set(...w.at);
+        for (const m of w.parts) spin.add(part(m, alt)); steer.add(spin); k.add(steer);
+        return { steer, spin, front: w.name.startsWith('front') };
+      });
+      return k;
+    };
+    youKart.clear(); youKart.add(build(true)); champKart.clear(); champKart.add(build(false));
+  } catch (e) { console.warn('kart model not loaded, keeping the simple one', e); }
+}
+loadKart();
+function turnWheels(obj, v, steer, dt) {
+  const k = obj.children[0]; if (!k || !k.wheels) return;
+  for (const w of k.wheels) { w.spin.rotation.x += v * dt / .11; if (w.front) w.steer.rotation.y = -steer * .45; }
+}
 
 /* ---------------- HUD: minimap, picture-in-picture, decisions ---------------- */
 const map = $('map');
@@ -303,7 +349,7 @@ const map = $('map');
   map.innerHTML = `<path d="${d}" fill="none" stroke="#2a3542" stroke-width="7" stroke-linejoin="round"/>
     <path d="${d}" fill="none" stroke="#6f7c8c" stroke-width="2" stroke-linejoin="round"/>
     <rect x="${st[0] - 3}" y="${st[1] - 3}" width="6" height="6" fill="#e9eef3"/>
-    <circle id="mC" r="4.5" fill="#38d0e2"/><circle id="mY" r="4.5" fill="#ffb23e" stroke="#11161d" stroke-width="1.5"/>`;
+    <circle id="mC" r="4.5" fill="#e0443a"/><circle id="mY" r="4.5" fill="#3b7bff" stroke="#e9eef3" stroke-width="1.5"/>`;
 }
 const pip = $('pip');
 let lastSec = null;
@@ -391,15 +437,17 @@ function placeKart(obj, x, y, z, h) {
 function render(dt) {
   // player kart
   placeKart(youKart, me.x, me.y, me.z, me.h);
-  youKart.rotation.z = -me.steer * Math.min(1, Math.abs(me.v) / 25) * .06;
+  youKart.rotation.z = -me.steer * Math.min(1, Math.abs(me.v) / 25) * .05;
+  turnWheels(youKart, me.v, me.steer, dt);
   // champion: position from its recorded arc length and lateral offset
   const g = ghostAt(t), gp = posAt(g.s, g.lat), ga = ghostAt(t + .12), gq = posAt(ga.s, ga.lat);
   const gh = Math.hypot(gq.x - gp.x, gq.z - gp.z) > .05 ? Math.atan2(gq.z - gp.z, gq.x - gp.x) : Math.atan2(gp.f.tz, gp.f.tx);
   placeKart(champKart, gp.x, gp.y, gp.z, gh);
+  turnWheels(champKart, state === 'race' && t >= T0 ? g.v : 0, 0, dt);
   // chase camera
   const fx = Math.cos(me.h), fz = Math.sin(me.h);
-  const want = new THREE.Vector3(me.x - fx * 6.8, me.y + 2.7, me.z - fz * 6.8);
-  const lk = new THREE.Vector3(me.x + fx * 6, me.y + 1.1, me.z + fz * 6);
+  const want = new THREE.Vector3(me.x - fx * 4.2, me.y + 1.9, me.z - fz * 4.2);
+  const lk = new THREE.Vector3(me.x + fx * 4, me.y + .5, me.z + fz * 4);
   if (!camInit || dt > .5) { cam.copy(want); look.copy(lk); camInit = true; }
   const a = 1 - Math.exp(-dt * 7); cam.lerp(want, a); look.lerp(lk, 1 - Math.exp(-dt * 12));
   camera.position.copy(cam); camera.lookAt(look);
