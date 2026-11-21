@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Race Ahead</title>
+<meta name="description" content="A driving harness that rewrites itself between laps: a run-time language model picks options while the kart drives; an offline model rewrites the action space, the executor and the playbook, and reviews every change.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27 shape-rendering=%27crispEdges%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%2311161d%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%2338d0e2%27/%3E%3Crect x=%271%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3Crect x=%275%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3C/svg%3E">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="style.css?v=14">
+</head>
+<body>
+<div class="bg" aria-hidden="true"><video autoplay muted loop playsinline preload="auto" poster="media/bg.jpg" src="media/bg.mp4"></video></div>
+<header class="top">
+  <a class="logo px" href="#top"><span>Race</span> <b>Ahead</b></a>
+  <nav>
+    <a href="#problem">Problem</a><a href="#system">System</a><a href="#evolution">Evolution</a><a href="#round">Inside a round</a><a href="#history">History</a><a href="#results">Results</a>
+    <a class="cta" href="demo/">Live demo</a>
+  </nav>
+</header>
+
+<main id="top">
+<section class="hero">
+  <h1 class="px"><span>Race</span> <b>Ahead</b></h1>
+  <p class="tag">A driving harness that rewrites itself between laps, from its own laps only.</p>
+  <div class="links">
+    <a class="btn primary" href="demo/">Open the live demo</a>
+    <a class="btn" href="media/race-ahead-demo.mp4">Watch the video · 2:30</a>
+    <a class="btn" href="https://github.com/RunRiotComeOn/car-racing-with-continual-learning">Code</a>
+    <span class="btn off" title="coming soon">Paper</span>
+  </div>
+  <div class="facts" id="facts"></div>
+</section>
+
+<section id="problem" class="split">
+  <div class="text">
+    <p class="kicker px">01 · The starting point</p>
+    <h2>A hand-written harness, and a slow lap</h2>
+    <p>A language model, <em class="jev">Jev</em>, drives the kart through a harness: before every section of the track it answers a few questions in natural language, and the harness turns the answers into steering and throttle.</p>
+    <p>We start from deliberately crude harnesses: two questions, no rules, slow fixed target speeds. On four tracks the system never trained on, they need far longer than the game's own AI, our oracle.</p>
+    <div class="hbars" id="startBars" role="img" aria-label="Lap time of the three crude starting harnesses and the oracle on four unseen tracks"></div>
+  </div>
+  <figure class="media">
+    <div class="lap solo" id="hookLap">
+      <video muted playsinline loop autoplay preload="metadata" src="media/sm-r00.mp4"></video>
+      <div class="hd"><span class="px" style="color:var(--ghost)">Round 0</span><small>snowmountain · unseen</small></div>
+      <div class="meter" id="hookMeter"></div>
+    </div>
+    <figcaption>The round-0 harness of crude start 2 on snowmountain, a track it never trained on (game footage, 1×). The meter shows the kart's speed; the red mark is 16&nbsp;m/s, the kart can do 25.</figcaption>
+  </figure>
+</section>
+
+<section id="system">
+  <p class="kicker px">02 · The system <span class="contrib">contribution 1 · two roles</span></p>
+  <h2>One model drives, another one rewrites the harness</h2>
+  <p class="lead">One lap runs along the top straight; one round of evolution goes once around the circuit. Hover over (or tap) any stop for details.</p>
+  <div class="sys" id="sys">
+    <div class="sysart" id="sysArt"></div>
+    <div class="systip" id="sysTip" role="tooltip"></div>
+    <ol class="syslist" id="sysList"></ol>
+  </div>
+</section>
+
+<section id="evolution">
+  <p class="kicker px">03 · Evolution on track</p>
+  <h2>Same track, six laps: how the champion got faster</h2>
+  <p class="lead">The champion of one run (crude start 2, seed 1) at five points of its 40 rounds, and the oracle, on the training track zengarden. Each lap is replayed in the game from the answers Jev gave in the recorded lap; the replayed lap times match the records.</p>
+  <div class="race" id="raceEvo"></div>
+  <p class="note">Round 0 never gets far above 16 m/s. Round 7 raises the target speeds, round 11 merges a branch that sets the speed from the road's curvature, round 14 lets the kart run flat out on straights (its dip to almost zero is a rescue after leaving the road, part of the recorded lap); later rounds refine steering and braking, and the final champion finishes without a rescue.</p>
+</section>
+
+<section id="round">
+  <p class="kicker px">04 · Inside a round <span class="contrib">contribution 2 · evidence and written verdicts</span></p>
+  <h2>Every change is measured three ways, then judged in writing</h2>
+  <p class="lead">Each square is one round: the system's total time on 10 practice tracks after that round (lower is faster). Click a square to see, in plain words, what the system tried, how each change did on the track, and why it was kept or thrown away. Round 15 is open: one change kept, one rejected.</p>
+  <div class="explorer">
+    <div class="curvebox"><svg id="curve" role="img" aria-label="Champion time per round"></svg><div class="legend" id="curveLegend"></div></div>
+    <div class="rdetail" id="rDetail"></div>
+  </div>
+</section>
+
+<section id="history">
+  <p class="kicker px">05 · Replayable history <span class="contrib">contribution 3</span></p>
+  <h2>Big redesigns, crashes and repairs stay in the record</h2>
+  <p class="lead">The cyan line is the best version so far; each square on it is a round that made it faster (the number is its total time in seconds). A big redesign is built on a side track below the line and joins the main line only once it is faster and the reviewer agrees. A red cross is a round where the new version crashed. In rounds 1–5 a bold rewrite crashed on every track; each error message went back to the system until it gave the redesign up. In round 20 another redesign crashed on every track, was repaired in round 21, and joined the main line. Click any side track.</p>
+  <div class="lineage"><svg id="lineage" role="img" aria-label="The best version so far and the side tracks of bigger redesigns"></svg>
+    <div class="legend"><span><i style="background:var(--fast)"></i>best version so far</span><span><i style="background:var(--faster)"></i>small changes kept</span><span><i style="background:var(--best)"></i>redesign that joined</span><span><i style="background:var(--slower)"></i>redesign given up · crash</span><span><i style="background:var(--chalk-3)"></i>merge refused by the reviewer</span></div>
+    <div class="bdetail" id="bDetail"></div></div>
+</section>
+
+<section id="unseen">
+  <p class="kicker px">06 · An unseen track <span class="contrib">contribution 3 · replay any champion</span></p>
+  <h2>Round 0, the final champion and the oracle, in sync</h2>
+  <p class="lead">Snowmountain was never used in training. Three recorded evaluation laps, replayed in the game.</p>
+  <div class="race" id="raceUnseen"></div>
+</section>
+
+<section id="results">
+  <p class="kicker px">07 · Results</p>
+  <h2>Three crude starts × three seeds</h2>
+  <div class="results">
+    <figure><svg id="gRounds" viewBox="0 0 640 360" role="img" aria-label="Champion time on the training tracks over 40 rounds, nine runs"></svg>
+      <figcaption id="gRoundsCap">Champion time on the 10 training tracks over 40 rounds; no demonstrations, only the system's own laps. Hover a line.</figcaption></figure>
+    <figure><svg id="gGap" viewBox="0 0 440 360" role="img" aria-label="Share of the gap to the oracle closed on four unseen tracks, per run"></svg>
+      <figcaption>Share of the gap to the oracle closed on 4 unseen tracks, (start − end) / (start − oracle), mean of 3 evaluation repeats. Grey: runs outside the main group.</figcaption></figure>
+  </div>
+</section>
+
+<section id="newtask">
+  <p class="kicker px">08 · Beyond one task</p>
+  <h2>A new task? Swap three parts, keep the loop</h2>
+  <div class="cards">
+    <div class="card"><p class="px c">Episode runner</p><p><code>lap.py</code> runs one episode and records what happened.</p></div>
+    <div class="card"><p class="px c">Starting harness</p><p>A seed <code>action_space.json</code>, <code>executor.py</code> and <code>playbook.json</code>.</p></div>
+    <div class="card"><p class="px c">Task brief</p><p>The task description in the proposer's and reviewer's prompts.</p></div>
+  </div>
+</section>
+
+<section id="cite">
+  <p class="kicker px">Cite</p>
+  <pre class="bib">@inproceedings{raceahead2027,
+  title  = {Race Ahead: A Driving Harness That Rewrites Itself Between Laps},
+  note   = {System demonstration},
+  year   = {2027}
+}</pre>
+</section>
+</main>
+
+<footer>
+  <span class="px">Race Ahead</span>
+  <span>Built on SuperTuxKart via pystk2.</span>
+</footer>
+<script src="demo/data.js"></script>
+<script src="laps.js"></script>
+<script src="laps-unseen.js"></script>
+<script src="site.js?v=17"></script>
+</body>
+</html>
