@@ -8,7 +8,13 @@ match the records. The 2:30 demo video is linked, not embedded.
 
 - `index.html`, `style.css`, `site.js`, `data.js`, `laps.js` (zengarden: champions after rounds 0, 7, 11, 14, 40 and the oracle),
   `laps-unseen.js` (snowmountain: round 0, final champion, oracle), `fonts/`.
-- `media/`: `lap-*.mp4` (zengarden), `sm-*.mp4` (snowmountain), `race-ahead-demo.mp4` (the video).
+- `play/`: the playable race. The visitor drives a kart on the road of cornfield_crossing (an unseen track) against a
+  replay of the frozen champion's recorded lap; the small window plays that lap in the game (`media/cc-r40.mp4`) with
+  Jev's recorded answers. `play/track.js` comes from `scripts/evolve/play_export.py`; the player's kart has the game
+  kart's top speed, acceleration and turning radius, plus a grip limit set so that an autopilot laps in about 55.9 s
+  (champion 56.9 s, game AI 54.0 s). three.js is loaded from jsDelivr.
+- `media/`: `lap-*.mp4` (zengarden), `sm-*.mp4` (snowmountain), `cc-r40.mp4` (cornfield_crossing, for `play/`),
+  `race-ahead-demo.mp4` (the video).
 - Host the folder as is (GitHub Pages from the repository root; `.nojekyll` keeps every file as is) or serve it with any
   static server, e.g. `python3 -m http.server`.
 - This repository holds the built site only. It is generated in the code repository
