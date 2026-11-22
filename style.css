@@ -51,16 +51,16 @@ figcaption b{font-weight:600}
 .wide img,.wide video,.media img,.media video,.two img{border:1px solid var(--rule)}
 
 .hero{padding-top:64px}
-/* Hero title: slanted racing type with a pixel kart lapping it (site.js draws the circuit). */
-h1.title{position:relative;display:inline-block;margin:0 0 22px -.42em;padding:.34em .42em .3em;
+/* Hero title: slanted racing type; a pixel kart corkscrews around it in 3D (site.js draws both orbit layers). */
+h1.title{position:relative;isolation:isolate;display:inline-block;margin:0 0 22px -.42em;padding:.34em .42em .3em;
   font:italic 800 clamp(54px,16.5vw,172px)/.86 var(--f-display);text-transform:uppercase;letter-spacing:.005em}
 h1.title span,h1.title b{position:relative;z-index:1}
 h1.title span{color:var(--chalk);text-shadow:-.05em 0 0 rgba(233,238,243,.16),-.1em 0 0 rgba(233,238,243,.06)}
 h1.title b{font-weight:800;text-shadow:-.05em 0 0 rgba(56,208,226,.3),-.1em 0 0 rgba(56,208,226,.12)}
-.circuit{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
-.circuit .lane{fill:none;stroke:rgba(233,238,243,.07)}
-.circuit .mid{fill:none;stroke:rgba(233,238,243,.28);stroke-width:1.5;stroke-dasharray:6 12}
-.circuit .trail{fill:none;stroke:var(--fast);stroke-linecap:round;opacity:.75}
+.orbit{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.orbit.back{z-index:0}.orbit.front{z-index:2}
+.orbit line{stroke:var(--fast);stroke-linecap:round}
+.orbit line.guide{stroke:var(--chalk)}
 @media (max-width:700px){h1.title{margin-left:-.2em;padding:.32em .26em .28em}}
 .tag{font-size:clamp(18px,2.2vw,24px);color:var(--chalk-2);margin:0 0 26px}
 .links{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px}

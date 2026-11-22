@@ -371,59 +371,66 @@
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { curve(); lineage(); }, 120); });
 })();
 
-// Hero title: a pixel kart laps a little circuit drawn around "Race Ahead", leaving a short cyan trail.
+// Hero title: a pixel kart corkscrews along "Race Ahead" in 3D, left to right. The word is the axis of the
+// coil; the kart is drawn in front of the letters on the near side of each turn and behind them on the far side.
 (() => {
-  const h1 = document.getElementById('title'), svg = document.getElementById('circuit');
-  if (!h1 || !svg) return;
+  const h1 = document.getElementById('title'), back = document.getElementById('orbitBack'), front = document.getElementById('orbitFront');
+  if (!h1 || !back || !front) return;
   const NS = 'http://www.w3.org/2000/svg', el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
   // 8x6 top-down kart, nose pointing +x: [x, y, w, h, fill]
   const SPRITE = [[0,0,2,1,'#e9eef3'],[5,0,2,1,'#e9eef3'],[0,5,2,1,'#e9eef3'],[5,5,2,1,'#e9eef3'],
     [0,1,1,4,'#a3afbd'],[1,1,6,4,'#38d0e2'],[7,2,1,2,'#38d0e2'],[3,2,2,2,'#ffb23e']];
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let path, trail, kart, len = 0, scale = 3, raf = 0, t0 = 0;
+  const SEGS = 34, FADE = .04;                                   // trail pieces; share of the run spent fading in/out
+  let g = {}, kart, segs = [], raf = 0, t0 = 0;
 
   function build() {
-    const w = h1.offsetWidth, h = h1.offsetHeight;
-    const fs = parseFloat(getComputedStyle(h1).fontSize);
-    const lane = Math.max(11, fs * .15), m = lane * .9;        // lane width, inset from the box edge
-    const r = Math.min((h - 2 * m) / 2, fs * .5);
-    const x0 = m, y0 = m, x1 = w - m, y1 = h - m;
-    // Rounded-rectangle circuit, clockwise, starting on the top straight.
-    const d = `M${x0 + r},${y0} H${x1 - r} A${r},${r} 0 0 1 ${x1},${y0 + r} V${y1 - r} A${r},${r} 0 0 1 ${x1 - r},${y1}` +
-              ` H${x0 + r} A${r},${r} 0 0 1 ${x0},${y1 - r} V${y0 + r} A${r},${r} 0 0 1 ${x0 + r},${y0} Z`;
-    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-    svg.replaceChildren(
-      el('path', { d, class: 'lane', 'stroke-width': lane }),
-      el('path', { d, class: 'mid' }),
-      trail = el('path', { d, class: 'trail', 'stroke-width': lane * .28 }),
-      kart = el('g', { 'shape-rendering': 'crispEdges' }));
-    path = trail; len = path.getTotalLength();
-    scale = lane * 1.4 / 6;
+    const w = h1.offsetWidth, h = h1.offsetHeight, fs = parseFloat(getComputedStyle(h1).fontSize);
+    const turns = Math.max(2, Math.round(w / (fs * 1.7)));       // ~one coil per two letters
+    g = { x0: fs * .3, x1: w - fs * .3, cy: h * .5, ry: h * .45, turns, size: Math.max(16, fs * .25),
+          lap: turns * 1500, trail: .7 / turns };
+    for (const s of [back, front]) { s.setAttribute('viewBox', `0 0 ${w} ${h}`); s.replaceChildren(); }
+    // Faint wire of the whole coil, so the 3D path reads even where the kart is not.
+    const n = turns * 60;
+    for (let i = 0; i < n; i++) {
+      const a = at(i / n), b = at((i + 1) / n), z = (a.z + b.z) / 2;
+      (z > 0 ? front : back).appendChild(el('line', { x1: a.x, y1: a.y, x2: b.x, y2: b.y, class: 'guide',
+        'stroke-width': 1 + .6 * z, 'stroke-opacity': (z > 0 ? .28 : .12) * fade(i / n) }));
+    }
+    segs = Array.from({ length: SEGS }, () => el('line', {}));
+    kart = el('g', { 'shape-rendering': 'crispEdges' });
     for (const [x, y, ww, hh, f] of SPRITE) kart.appendChild(el('rect', { x, y, width: ww, height: hh, fill: f }));
-    const tl = Math.min(len * .22, fs * 2.4);
-    trail.setAttribute('stroke-dasharray', `${tl} ${len - tl}`);
-    trail.dataset.tl = tl;
   }
 
-  function place(dist) {
-    dist = ((dist % len) + len) % len;
-    const p = path.getPointAtLength(dist), q = path.getPointAtLength((dist + 1) % len);
-    const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
-    kart.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${a}) scale(${scale}) translate(-4,-3)`);
-    trail.setAttribute('stroke-dashoffset', +trail.dataset.tl - dist);
+  const fade = u => Math.max(0, Math.min(1, u / FADE, (1 - u) / FADE));
+  // u in [0,1] along the run -> screen point and depth z in [-1,1] (+1 nearest the viewer).
+  function at(u) {
+    const phi = u * g.turns * 2 * Math.PI;
+    return { x: g.x0 + (g.x1 - g.x0) * u, y: g.cy - g.ry * Math.cos(phi), z: Math.sin(phi) };
   }
 
-  function frame(t) {
-    if (!t0) t0 = t;
-    const lapMs = 6500;                                          // one lap of the title
-    place(((t - t0) % lapMs) / lapMs * len);
-    raf = requestAnimationFrame(frame);
+  function draw(u) {
+    segs.forEach((ln, i) => {
+      const ua = u - g.trail * (i + 1) / SEGS, ub = u - g.trail * i / SEGS;
+      if (ua < 0) { ln.remove(); return; }
+      const a = at(ua), b = at(ub), z = (a.z + b.z) / 2, k = 1 - i / SEGS;
+      ln.setAttribute('x1', a.x); ln.setAttribute('y1', a.y); ln.setAttribute('x2', b.x); ln.setAttribute('y2', b.y);
+      ln.setAttribute('stroke-width', g.size * .3 * (1 + .3 * z) * (.4 + .6 * k));
+      ln.setAttribute('stroke-opacity', (z > 0 ? .85 : .4) * k * fade(ub));
+      (z > 0 ? front : back).appendChild(ln);
+    });
+    const p = at(u), q = at(Math.min(1, u + .0005)), r = at(u - .0005);
+    const ang = Math.atan2(q.y - r.y, q.x - r.x) * 180 / Math.PI;
+    const s = g.size * (1 + .3 * p.z) / 6;                       // nearer = bigger
+    kart.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${ang}) scale(${s}) translate(-4,-3)`);
+    kart.setAttribute('opacity', (p.z > 0 ? 1 : .6 + .3 * (1 + p.z)) * fade(u));
+    (p.z > 0 ? front : back).appendChild(kart);
   }
 
+  function frame(t) { if (!t0) t0 = t; draw(((t - t0) % g.lap) / g.lap); raf = requestAnimationFrame(frame); }
   function start() {
-    build();
-    cancelAnimationFrame(raf);
-    if (still) { trail.style.display = 'none'; place(len * .08); return; }
+    build(); cancelAnimationFrame(raf); t0 = 0;
+    if (still) { draw(.3); segs.forEach(l => l.remove()); return; }
     raf = requestAnimationFrame(frame);
   }
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(start);
