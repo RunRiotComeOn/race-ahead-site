@@ -75,7 +75,7 @@
     const GATES = [['rt0', 'Track ahead', 'A section', 'Its shape, the kart\'s speed', C.c2], ['rt1', 'Suggest', 'Rules', 'Suggest an answer', C.slow],
       ['rt2', 'Ask', 'Questions', 'How fast? Which line?', C.slow], ['rt3', 'Choose', 'Decision model', 'Picks one answer each', C.fast],
       ['rt4', 'At the wheel', 'Control code', 'Answers → steering', C.slow], ['rt5', 'Afterwards', 'Lap record', 'Times, speeds, answers', C.c2]];
-    const ST = [['c1', 360, 420, 'Start', 'Drive', 'Best version on practice tracks', C.fast, -1], ['c2', 600, 420, 'Second model', 'Propose', 'Suggests changes from lap records', C.slow, -1],
+    const ST = [['c1', 360, 420, 'Start', 'Drive', 'Best version on practice tracks', C.fast, -1], ['c2', 600, 420, 'LLM', 'Propose', 'Suggests changes from lap records', C.slow, -1],
       ['c3', 840, 420, 'Checks', 'Run it', 'Must run on every track', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', 'Tests which changes help', C.fast, 1],
       ['c5', 600, 720, 'Reviewer model', 'Decide', 'Keeps or rejects, in writing', C.slow, 1], ['c6', 360, 720, 'Finish line', 'Drive again', 'Faster version becomes best', C.faster, 1]];
     const T = (x, y, t, f, size, fill, anchor = 'start', extra = '') => `<text x="${x}" y="${y}" font-family='${f}' font-size="${size}" fill="${fill}" text-anchor="${anchor}" ${extra}>${esc(t)}</text>`;
@@ -112,7 +112,6 @@
       <path d="${track}" fill="none" stroke="#3a4757" stroke-width="50"/><path d="${track}" fill="none" stroke="#1a222c" stroke-width="44"/><path d="${track}" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
     for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) s += `<rect x="${128 + c * 7.4}" y="${563 + r * 7.4}" width="7.4" height="7.4" fill="${(r + c) % 2 ? C.chalk : '#0b0f14'}"/>`;
     s += T(186, 560, 'NEW BEST', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"') + T(186, 578, 'VERSION', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"');
-    s += T(985, 586, '40', F.disp, 58, C.chalk, 'middle', 'font-weight="700"') + T(985, 608, 'ROUNDS', F.px, 11, C.c3, 'middle', 'letter-spacing="2"') + T(985, 626, 'OWN LAPS ONLY', F.px, 9, C.c3, 'middle', 'letter-spacing="1"');
     // infield: trial runs and the edit log feed the proposer; big redesigns go down the pit lane
     s += `<path d="M470 512C520 500 560 480 586 448" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ag)"/>
       <path d="M730 512C680 500 640 480 614 448" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ag)"/>
