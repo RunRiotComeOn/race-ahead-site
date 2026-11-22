@@ -1,7 +1,7 @@
 :root{
-  --asphalt:#11161d;--panel:#171e27;--panel-2:#1d2631;--rule:#2a3542;
+  --asphalt:#111820;--panel:#153844;--panel-2:#173843;--rule:#38606a;
   --chalk:#e9eef3;--chalk-2:#a3afbd;--chalk-3:#6f7c8c;
-  --fast:#38d0e2;--slow:#ffb23e;--faster:#35d07f;--slower:#ff5f5f;--oracle:#f4f1e8;
+  --fast:#6fc8cf;--slow:#ffc2b4;--faster:#5ecaa3;--slower:#ff5f5f;--oracle:#f4f1e8;
   --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,sans-serif;
   --f-data:"IBM Plex Mono",ui-monospace,Menlo,monospace;

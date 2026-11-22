@@ -22,7 +22,7 @@
   const U = window.UNSEEN, gap = U ? (U.r00.lap - U.r40.lap) / (U.r00.lap - U.oracle.lap) : null;
   $('facts').innerHTML = [
     ['2 models', 'one drives the kart, the other rewrites its driving program between laps', ''],
-    U ? [`${U.r00.lap.toFixed(0)} s → ${U.r40.lap.toFixed(0)} s`, 'one lap on a snowy track it never practiced on: the first version, and the version after 40 rounds', ''] : null,
+    U ? [`${U.r00.lap.toFixed(0)} s → ${U.r40.lap.toFixed(0)} s`, 'one lap on a snowy track it never practiced on: the first version, and the version after 40 rounds', 'y'] : null,
     U ? [`${Math.round(gap * 100)} %`, `of the distance to the game's own AI closed there (the game's AI, which knows the track: ${U.oracle.lap.toFixed(0)} s)`, 'c'] : null]
     .filter(Boolean).map(([v, k, c]) => `<div><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
   { const g = runs.map(r => r.gap_closed * 100);
@@ -68,7 +68,7 @@
   };
   {
     // the system as a circuit: one lap along the top straight, one round of evolution once around the track
-    const C = { fast: css('--fast'), slow: css('--slow'), best: css('--best'), faster: css('--faster'), slower: css('--slower'), chalk: css('--chalk'), c2: css('--chalk-2'), c3: css('--chalk-3'), rule: css('--rule'), bg: '#0d1218' };
+    const C = { fast: css('--fast'), slow: css('--slow'), best: css('--best'), faster: css('--faster'), slower: css('--slower'), chalk: css('--chalk'), c2: css('--chalk-2'), c3: css('--chalk-3'), rule: css('--rule'), bg: '#102c36' };
     const F = { px: css('--f-pixel'), disp: css('--f-display'), body: css('--f-body') };
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const gx = [110, 306, 502, 698, 894, 1090];
@@ -79,7 +79,7 @@
       ['c3', 840, 420, 'Checks', 'Run it', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', C.fast, 1],
       ['c5', 600, 720, 'Reviewer model', 'Decide', C.slow, 1], ['c6', 360, 720, 'Finish line', 'Drive again', C.faster, 1]];
     const T = (x, y, t, f, size, fill, anchor = 'start', extra = '') => `<text x="${x}" y="${y}" font-family='${f}' font-size="${size}" fill="${fill}" text-anchor="${anchor}" ${extra}>${esc(t)}</text>`;
-    const kart = col => `<g><rect x="-15" y="-8" width="30" height="16" rx="3" fill="${col}"/><rect x="-4" y="-5" width="10" height="10" fill="#11161d"/><rect x="-13" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="5" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="-13" y="8" width="8" height="4" fill="#0b0f14"/><rect x="5" y="8" width="8" height="4" fill="#0b0f14"/><rect x="15" y="-5" width="3" height="10" fill="${C.chalk}"/></g>`;
+    const kart = col => `<g><rect x="-15" y="-8" width="30" height="16" rx="3" fill="${col}"/><rect x="-4" y="-5" width="10" height="10" fill="#111d25"/><rect x="-13" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="5" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="-13" y="8" width="8" height="4" fill="#0b0f14"/><rect x="5" y="8" width="8" height="4" fill="#0b0f14"/><rect x="15" y="-5" width="3" height="10" fill="${C.chalk}"/></g>`;
     let s = `<svg viewBox="0 0 1200 840" class="sysvg" role="img" aria-label="Race Ahead system: run time and one round of evolution">
       <defs><marker id="au" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.slow}"/></marker>
       <marker id="ag" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="${C.c3}"/></marker>
@@ -87,7 +87,7 @@
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6"/></filter></defs>`;
     // ---- top straight: one section of a lap
     s += T(20, 30, 'ON TRACK', F.px, 14, C.fast, 'start', 'letter-spacing="2"') + T(128, 30, '· EVERY PART OF A LAP', F.px, 14, C.c2, 'start', 'letter-spacing="2"') + T(1180, 30, 'SUPERTUXKART', F.px, 11, C.c3, 'end', 'letter-spacing="2"');
-    s += `<rect x="0" y="170" width="1200" height="44" fill="#1a222c"/><path d="M0 170H1200M0 214H1200" stroke="#3a4757" stroke-width="2"/><path d="M0 192H1200" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
+    s += `<rect x="0" y="170" width="1200" height="44" fill="#1b414d"/><path d="M0 170H1200M0 214H1200" stroke="#416672" stroke-width="2"/><path d="M0 192H1200" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
     GATES.forEach(([id, k, t, sub, col, tag], i) => {
       const x = gx[i];
       s += `<g class="hot" data-tip="${id}" tabindex="0" role="button" aria-label="${esc(t)}">
@@ -95,7 +95,7 @@
         <path d="M${x} 162V222" stroke="${col}" stroke-width="2" stroke-dasharray="4 4"/><rect x="${x - 3}" y="158" width="6" height="12" fill="${col}"/><rect x="${x - 3}" y="214" width="6" height="12" fill="${col}"/>
         ${T(x, 70, k.toUpperCase(), F.px, 11, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, 100, t, F.disp, 27, col === C.c2 ? C.chalk : col, 'middle', 'font-weight="600"')}
         ${T(x, 122, sub, F.body, 14, C.c2, 'middle')}
-        ${tag ? `<rect x="${x - 44}" y="132" width="88" height="17" fill="${C.slow}"/>${T(x, 145, tag.toUpperCase(), F.px, 10, '#11161d', 'middle')}` : ''}</g>`;
+        ${tag ? `<rect x="${x - 44}" y="132" width="88" height="17" fill="${C.slow}"/>${T(x, 145, tag.toUpperCase(), F.px, 10, '#111d25', 'middle')}` : ''}</g>`;
       if (i < 5) s += T((x + gx[i + 1]) / 2, 197, '›', F.disp, 22, C.c3, 'middle');
     });
     s += `<g class="kart">${kart(C.fast)}${still ? '' : '<animateMotion dur="7s" repeatCount="indefinite" path="M-60 192H1260"/>'}</g>`;
@@ -109,7 +109,7 @@
     const track = 'M300 420H900A150 150 0 0 1 900 720H300A150 150 0 0 1 300 420Z';
     s += `<path d="M300 382A188 188 0 0 0 300 758" fill="none" stroke="${C.chalk}" stroke-width="7" opacity=".85"/><path d="M300 382A188 188 0 0 0 300 758" fill="none" stroke="${C.slower}" stroke-width="7" stroke-dasharray="16 16"/>
       <path d="M900 382A188 188 0 0 1 900 758" fill="none" stroke="${C.chalk}" stroke-width="7" opacity=".85"/><path d="M900 382A188 188 0 0 1 900 758" fill="none" stroke="${C.slower}" stroke-width="7" stroke-dasharray="16 16"/>
-      <path d="${track}" fill="none" stroke="#3a4757" stroke-width="50"/><path d="${track}" fill="none" stroke="#1a222c" stroke-width="44"/><path d="${track}" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
+      <path d="${track}" fill="none" stroke="#416672" stroke-width="50"/><path d="${track}" fill="none" stroke="#1b414d" stroke-width="44"/><path d="${track}" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="16 14" opacity=".6"/>`;
     for (let r = 0; r < 2; r++) for (let c = 0; c < 6; c++) s += `<rect x="${128 + c * 7.4}" y="${563 + r * 7.4}" width="7.4" height="7.4" fill="${(r + c) % 2 ? C.chalk : '#0b0f14'}"/>`;
     s += T(186, 560, 'NEW BEST', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"') + T(186, 578, 'VERSION', F.px, 12, C.faster, 'start', 'letter-spacing="1.5"');
     // infield: trial runs and the edit log feed the proposer; big redesigns go down the pit lane
@@ -119,7 +119,7 @@
     const IN = [['trial', 400, 530, 'Before proposing', 'Try first', 'Test an idea on one section or lap', C.chalk], ['editlog', 800, 530, 'Memory', 'Past edits', 'Every decision and its reason', C.chalk],
       ['branch', 600, 604, 'Pit lane', 'Big redesigns', 'Tested separately', C.best]];
     for (const [id, x, y, k, t, sub, col] of IN) s += `<g class="hot" data-tip="${id}" tabindex="0" role="button" aria-label="${esc(t)}">
-      <rect x="${x - 120}" y="${y - 26}" width="240" height="${id === 'branch' ? 70 : 72}" rx="6" fill="${id === 'branch' ? 'rgba(180,108,255,.10)' : 'rgba(233,238,243,.03)'}" stroke="${id === 'branch' ? C.best : '#2e3a48'}" stroke-dasharray="${id === 'branch' ? '' : '5 5'}"/>
+      <rect x="${x - 120}" y="${y - 26}" width="240" height="${id === 'branch' ? 70 : 72}" rx="6" fill="${id === 'branch' ? 'rgba(255,136,130,.10)' : 'rgba(233,238,243,.03)'}" stroke="${id === 'branch' ? C.best : '#2e3a48'}" stroke-dasharray="${id === 'branch' ? '' : '5 5'}"/>
       ${T(x, y - 8, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, y + 16, t, F.disp, 22, col, 'middle', 'font-weight="600"')}${T(x, y + 34, sub, F.body, 12.5, C.c2, 'middle')}</g>`;
     s += `<g class="kart">${kart(C.slow)}${still ? '' : `<animateMotion dur="12s" repeatCount="indefinite" rotate="auto" path="${track}"/>`}</g>`;
     for (const [id, x, y, k, t, col, side] of ST) {
@@ -127,7 +127,7 @@
       s += `<g class="hot st" data-tip="${id}" tabindex="0" role="button" aria-label="${esc(t)}">
         <rect x="${x - 105}" y="${side < 0 ? y - 106 : y - 26}" width="210" height="132" fill="transparent"/>
         <circle cx="${x}" cy="${y}" r="24" fill="${col}" opacity=".25" filter="url(#glow)"/>
-        <circle cx="${x}" cy="${y}" r="17" fill="#11161d" stroke="${col}" stroke-width="3"/>${T(x, y + 6, ST.findIndex(q => q[0] === id) + 1, F.px, 16, col, 'middle')}
+        <circle cx="${x}" cy="${y}" r="17" fill="#111d25" stroke="${col}" stroke-width="3"/>${T(x, y + 6, ST.findIndex(q => q[0] === id) + 1, F.px, 16, col, 'middle')}
         ${T(x, ly, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, ly + 26, t, F.disp, 26, col === C.c2 ? C.chalk : col, 'middle', 'font-weight="600"')}</g>`;
     }
     s += '</svg>';
@@ -177,10 +177,10 @@
       const Dm = Math.max(...ids.map(i => L[i].d.at(-1))), VM = 34;
       x = d => P.l + (W - P.l - P.r) * d / Dm; y = v => H - P.b - (H - P.t - P.b) * v / VM;
       let s = '';
-      for (const v of [0, 10, 20, 30]) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="#2a3542"/><text x="4" y="${y(v) + 4}" fill="#6f7c8c" font-size="11" font-family="IBM Plex Mono">${v}</text>`;
+      for (const v of [0, 10, 20, 30]) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" stroke="#38606a"/><text x="4" y="${y(v) + 4}" fill="#6f7c8c" font-size="11" font-family="IBM Plex Mono">${v}</text>`;
       s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(16)}" y2="${y(16)}" stroke="#ff5f5f" stroke-dasharray="6 5" opacity=".7"/>`;
       for (const id of ids) { const l = L[id]; s += `<polyline points="${l.d.map((d, k) => `${x(d).toFixed(1)},${y(l.v[k]).toFixed(1)}`).join(' ')}" fill="none" stroke="${col[id]}" stroke-width="${id === 'r40' ? 2.2 : 1.5}"><title>${l.label} · ${l.lap.toFixed(1)} s</title></polyline>`; }
-      for (const id of ids) s += `<circle data-id="${id}" r="5" fill="${col[id]}" stroke="#11161d" stroke-width="2"/>`;
+      for (const id of ids) s += `<circle data-id="${id}" r="5" fill="${col[id]}" stroke="#111d25" stroke-width="2"/>`;
       s += `<text x="${W - P.r}" y="${H - 6}" fill="#6f7c8c" font-size="11" font-family="IBM Plex Mono" text-anchor="end">distance along the lap →</text>`;
       svg.innerHTML = s; ids.forEach(id => dots[id] = svg.querySelector(`circle[data-id="${id}"]`));
     }
@@ -218,8 +218,8 @@
     io.observe(grid);
   }
   race($('raceEvo'), window.LAPS, ['r00', 'r07', 'r11', 'r14', 'r40', 'oracle'],
-    { r00: '#8e99a8', r07: '#ffb23e', r11: '#35d07f', r14: '#b46cff', r40: '#38d0e2', oracle: '#f4f1e8' }, { chart: true, src: id => `media/lap-${id}.mp4` });
-  race($('raceUnseen'), window.UNSEEN, ['r00', 'r40', 'oracle'], { r00: '#8e99a8', r40: '#38d0e2', oracle: '#f4f1e8' },
+    { r00: '#8e99a8', r07: '#ffc2b4', r11: '#5ecaa3', r14: '#ff8882', r40: '#6fc8cf', oracle: '#f4f1e8' }, { chart: true, src: id => `media/lap-${id}.mp4` });
+  race($('raceUnseen'), window.UNSEEN, ['r00', 'r40', 'oracle'], { r00: '#8e99a8', r40: '#6fc8cf', oracle: '#f4f1e8' },
     { rate: 2, src: id => `media/sm-${id}.mp4` });
 
   /* ---------- inside a round ---------- */
@@ -379,7 +379,7 @@
   const NS = 'http://www.w3.org/2000/svg', el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
   // 8x6 top-down kart, nose pointing +x: [x, y, w, h, fill]
   const SPRITE = [[0,0,2,1,'#e9eef3'],[5,0,2,1,'#e9eef3'],[0,5,2,1,'#e9eef3'],[5,5,2,1,'#e9eef3'],
-    [0,1,1,4,'#a3afbd'],[1,1,6,4,'#38d0e2'],[7,2,1,2,'#38d0e2'],[3,2,2,2,'#ffb23e']];
+    [0,1,1,4,'#a3afbd'],[1,1,6,4,'#6fc8cf'],[7,2,1,2,'#6fc8cf'],[3,2,2,2,'#ffc2b4']];
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const SEGS = 34, FADE = .04;                                   // trail pieces; share of the run spent fading in/out
   let g = {}, kart, segs = [], raf = 0, t0 = 0;
