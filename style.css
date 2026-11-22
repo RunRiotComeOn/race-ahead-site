@@ -9,7 +9,7 @@
   --notch:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:70px}
+html{scroll-behavior:smooth;scroll-padding-top:70px;overscroll-behavior-y:none}
 body{margin:0;background:var(--asphalt);color:var(--chalk);font:17px/1.6 var(--f-body)}
 /* page background: a recorded lap of the final champion on snowmountain, behind a dark veil */
 .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;background:#0b0f14 url(media/bg.jpg) center/cover no-repeat}
@@ -27,7 +27,7 @@ code{color:var(--fast)}
 em.jev{font-style:normal;color:var(--fast)}
 
 .top{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:16px;
-  padding:12px 28px;background:rgba(17,22,29,.94);border-bottom:1px solid var(--rule);backdrop-filter:blur(6px)}
+  padding:12px 28px;background:var(--asphalt);border-bottom:1px solid var(--rule)}
 .logo{font:italic 800 26px/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;text-decoration:none;color:var(--chalk);white-space:nowrap}
 .logo b,h1 b{color:var(--fast);font-weight:800}
 nav{display:flex;gap:20px;align-items:center;flex-wrap:wrap;font-size:14px}
