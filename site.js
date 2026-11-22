@@ -370,3 +370,62 @@
 
   let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { curve(); lineage(); }, 120); });
 })();
+
+// Hero title: a pixel kart laps a little circuit drawn around "Race Ahead", leaving a short cyan trail.
+(() => {
+  const h1 = document.getElementById('title'), svg = document.getElementById('circuit');
+  if (!h1 || !svg) return;
+  const NS = 'http://www.w3.org/2000/svg', el = (t, a) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  // 8x6 top-down kart, nose pointing +x: [x, y, w, h, fill]
+  const SPRITE = [[0,0,2,1,'#e9eef3'],[5,0,2,1,'#e9eef3'],[0,5,2,1,'#e9eef3'],[5,5,2,1,'#e9eef3'],
+    [0,1,1,4,'#a3afbd'],[1,1,6,4,'#38d0e2'],[7,2,1,2,'#38d0e2'],[3,2,2,2,'#ffb23e']];
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let path, trail, kart, len = 0, scale = 3, raf = 0, t0 = 0;
+
+  function build() {
+    const w = h1.offsetWidth, h = h1.offsetHeight;
+    const fs = parseFloat(getComputedStyle(h1).fontSize);
+    const lane = Math.max(11, fs * .15), m = lane * .9;        // lane width, inset from the box edge
+    const r = Math.min((h - 2 * m) / 2, fs * .5);
+    const x0 = m, y0 = m, x1 = w - m, y1 = h - m;
+    // Rounded-rectangle circuit, clockwise, starting on the top straight.
+    const d = `M${x0 + r},${y0} H${x1 - r} A${r},${r} 0 0 1 ${x1},${y0 + r} V${y1 - r} A${r},${r} 0 0 1 ${x1 - r},${y1}` +
+              ` H${x0 + r} A${r},${r} 0 0 1 ${x0},${y1 - r} V${y0 + r} A${r},${r} 0 0 1 ${x0 + r},${y0} Z`;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.replaceChildren(
+      el('path', { d, class: 'lane', 'stroke-width': lane }),
+      el('path', { d, class: 'mid' }),
+      trail = el('path', { d, class: 'trail', 'stroke-width': lane * .28 }),
+      kart = el('g', { 'shape-rendering': 'crispEdges' }));
+    path = trail; len = path.getTotalLength();
+    scale = lane * 1.4 / 6;
+    for (const [x, y, ww, hh, f] of SPRITE) kart.appendChild(el('rect', { x, y, width: ww, height: hh, fill: f }));
+    const tl = Math.min(len * .22, fs * 2.4);
+    trail.setAttribute('stroke-dasharray', `${tl} ${len - tl}`);
+    trail.dataset.tl = tl;
+  }
+
+  function place(dist) {
+    dist = ((dist % len) + len) % len;
+    const p = path.getPointAtLength(dist), q = path.getPointAtLength((dist + 1) % len);
+    const a = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+    kart.setAttribute('transform', `translate(${p.x},${p.y}) rotate(${a}) scale(${scale}) translate(-4,-3)`);
+    trail.setAttribute('stroke-dashoffset', +trail.dataset.tl - dist);
+  }
+
+  function frame(t) {
+    if (!t0) t0 = t;
+    const lapMs = 6500;                                          // one lap of the title
+    place(((t - t0) % lapMs) / lapMs * len);
+    raf = requestAnimationFrame(frame);
+  }
+
+  function start() {
+    build();
+    cancelAnimationFrame(raf);
+    if (still) { trail.style.display = 'none'; place(len * .08); return; }
+    raf = requestAnimationFrame(frame);
+  }
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(start);
+  let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(start, 120); });
+})();
