@@ -33,23 +33,23 @@
 
 <section id="drive">
   <p class="kicker px">01 · How an AI drives here</p>
-  <h2>A language model at the wheel, through a driving program</h2>
-  <p class="lead">The game is SuperTuxKart, a kart racer. A language model, <em class="jev">Jev</em>, does not steer directly. Just before each part of the track, it answers a few questions in words, and a small driving program turns those answers into steering, throttle and brake, 60 times a second.</p>
+  <h2>How the decision model drives the kart</h2>
+  <p class="lead">In SuperTuxKart, a decision model looks at the track ahead and chooses how to drive. A driving program turns its choices into steering, throttle and braking.</p>
   <div class="flow">
     <div class="fcard"><p class="px k">The game</p><p class="t">A section of track is coming</p><p>A straight, a tight left, a wide right: its length and how sharply it bends.</p></div>
     <i class="arrow" aria-hidden="true">→</i>
-    <div class="fcard jevc"><p class="px k">The driver · Jev</p><p class="t">Answers a few questions</p><p>“How fast?” <b>flat out</b> · “Which line?” <b>hold</b> · “How to brake?” <b>normal</b></p></div>
+    <div class="fcard jevc"><p class="px k">Decision model</p><p class="t">Answers a few questions</p><p>“How fast?” <b>flat out</b> · “Which line?” <b>hold</b> · “How to brake?” <b>normal</b></p></div>
     <i class="arrow" aria-hidden="true">→</i>
-    <div class="fcard prog"><p class="px k">The driving program</p><p class="t">Turns answers into controls</p><p>Three small files: <b>the questions</b> Jev is asked, <b>the code</b> that turns answers into steering and throttle, and <b>rules</b> that suggest answers.</p></div>
+    <div class="fcard prog"><p class="px k">The driving program</p><p class="t">Turns answers into controls</p><p>The program asks <b>driving questions</b>, uses <b>rules</b> to suggest answers, and turns the chosen answers into <b>kart controls</b>.</p></div>
   </div>
-  <p class="note">This driving program (researchers call it a <i>harness</i>) is what gets better on this page. Jev itself never changes: the same model answers the questions in every lap.</p>
+  <p class="note">The driving program improves over practice laps. The same decision model makes the driving choices throughout.</p>
 </section>
 
 <section id="start" class="split">
   <div class="text">
     <p class="kicker px">02 · The starting point</p>
     <h2>A deliberately bad first version</h2>
-    <p>We hand the system a driving program that is bad on purpose: only two questions, no rules, and slow, fixed target speeds. We wrote three such bad starts, called A, B and C.</p>
+    <p>We hand the system a driving program that is bad on purpose: basic driving questions, no rules, and low speed targets. We wrote three such bad starts, called A, B and C.</p>
     <p>For comparison we use <b>the game's own AI</b>. It knows the whole track in advance, so it is a strong reference. The system never sees how it drives and never learns from it.</p>
     <div class="hbars" id="startBars" role="img" aria-label="Lap time of the three bad first versions and of the game's own AI on four tracks never used for practice"></div>
   </div>
@@ -59,15 +59,15 @@
       <div class="hd"><span class="px" style="color:var(--ghost)">First version</span><small>snowy track · never practiced</small></div>
       <div class="meter" id="hookMeter"></div>
     </div>
-    <figcaption>Start B on a snowy track it never practiced on (game footage, real time). The meter shows the kart's speed: it never gets past the red mark at 16&nbsp;m/s, although the kart can do 25.</figcaption>
+    <figcaption>Start B on a snowy track it never practiced on (game footage, real time). The speed meter shows how much room the starting program leaves for the kart to go faster.</figcaption>
   </figure>
 </section>
 
 <section id="system">
   <p class="kicker px">03 · How it learns</p>
-  <h2>One model drives, a second model rewrites the driving program</h2>
-  <p class="lead">Between laps, a second language model reads the records of the laps and proposes edits to the three files. Every edit is driven on the track and measured, a reviewer model keeps or rejects each one and writes down why, and the result is driven again. One pass of this loop is a <b>round</b>; the system runs 40 rounds and keeps <b>the best version so far</b>. It practices on 10 tracks and never sees the tracks we test it on later.</p>
-  <p class="hint2">Top: what happens on every part of a lap. Bottom: one round, once around the circuit. Hover over (or tap) any stop for details.</p>
+  <h2>How practice laps improve the driving program</h2>
+  <p class="lead">Between laps, a large language model (LLM) reviews the lap records and suggests changes to the driving program. The system tests the changes on practice tracks, and a reviewer decides which to keep. The system tests the selected changes together before adopting a faster version. We test the final program on tracks it never practiced on.</p>
+  <p class="hint2">The top shows how the kart drives. The bottom shows how the program improves between laps. Hover over or tap any stop for details.</p>
   <div class="sys" id="sys">
     <div class="sysart" id="sysArt"></div>
     <div class="systip" id="sysTip" role="tooltip"></div>

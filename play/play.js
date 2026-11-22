@@ -452,7 +452,7 @@ const pip = $('pip');
 let lastSec = null;
 function showDecision(s) {
   const sec = secAt(s); if (sec === lastSec) return; lastSec = sec;
-  $('dSec').textContent = `Jev's answers · section ${sec.id} (${sec.type})`;
+  $('dSec').textContent = `Decision model answers · section ${sec.id} (${sec.type})`;
   const ch = sec.choice || {};
   $('dChips').innerHTML = Object.entries(ch).map(([k, v]) =>
     `<span><i>${k.replace(/_/g, ' ')}</i> ${String(v).toLowerCase().replace(/_/g, ' ')}</span>`).join('') || '<span>–</span>';
