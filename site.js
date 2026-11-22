@@ -75,9 +75,9 @@
     const GATES = [['rt0', 'Track ahead', 'A section', 'Its shape, the kart\'s speed', C.c2], ['rt1', 'Suggest', 'Rules', 'Suggest an answer', C.slow],
       ['rt2', 'Ask', 'Questions', 'How fast? Which line?', C.slow], ['rt3', 'Choose', 'Decision model', 'Picks one answer each', C.fast],
       ['rt4', 'At the wheel', 'Control code', 'Answers → steering', C.slow], ['rt5', 'Afterwards', 'Lap record', 'Times, speeds, answers', C.c2]];
-    const ST = [['c1', 360, 420, 'Start', 'Drive', 'Best version on practice tracks', C.fast, -1], ['c2', 600, 420, 'LLM', 'Propose', 'Suggests changes from lap records', C.slow, -1],
-      ['c3', 840, 420, 'Checks', 'Run it', 'Must run on every track', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', 'Tests which changes help', C.fast, 1],
-      ['c5', 600, 720, 'Reviewer model', 'Decide', 'Keeps or rejects, in writing', C.slow, 1], ['c6', 360, 720, 'Finish line', 'Drive again', 'Faster version becomes best', C.faster, 1]];
+    const ST = [['c1', 360, 420, 'Start', 'Drive', C.fast, -1], ['c2', 600, 420, 'LLM', 'Propose', C.slow, -1],
+      ['c3', 840, 420, 'Checks', 'Run it', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', C.fast, 1],
+      ['c5', 600, 720, 'Reviewer model', 'Decide', C.slow, 1], ['c6', 360, 720, 'Finish line', 'Drive again', C.faster, 1]];
     const T = (x, y, t, f, size, fill, anchor = 'start', extra = '') => `<text x="${x}" y="${y}" font-family='${f}' font-size="${size}" fill="${fill}" text-anchor="${anchor}" ${extra}>${esc(t)}</text>`;
     const kart = col => `<g><rect x="-15" y="-8" width="30" height="16" rx="3" fill="${col}"/><rect x="-4" y="-5" width="10" height="10" fill="#11161d"/><rect x="-13" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="5" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="-13" y="8" width="8" height="4" fill="#0b0f14"/><rect x="5" y="8" width="8" height="4" fill="#0b0f14"/><rect x="15" y="-5" width="3" height="10" fill="${C.chalk}"/></g>`;
     let s = `<svg viewBox="0 0 1200 840" class="sysvg" role="img" aria-label="Race Ahead system: run time and one round of evolution">
@@ -122,13 +122,13 @@
       <rect x="${x - 120}" y="${y - 26}" width="240" height="${id === 'branch' ? 70 : 72}" rx="6" fill="${id === 'branch' ? 'rgba(180,108,255,.10)' : 'rgba(233,238,243,.03)'}" stroke="${id === 'branch' ? C.best : '#2e3a48'}" stroke-dasharray="${id === 'branch' ? '' : '5 5'}"/>
       ${T(x, y - 8, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, y + 16, t, F.disp, 22, col, 'middle', 'font-weight="600"')}${T(x, y + 34, sub, F.body, 12.5, C.c2, 'middle')}</g>`;
     s += `<g class="kart">${kart(C.slow)}${still ? '' : `<animateMotion dur="12s" repeatCount="indefinite" rotate="auto" path="${track}"/>`}</g>`;
-    for (const [id, x, y, k, t, sub, col, side] of ST) {
+    for (const [id, x, y, k, t, col, side] of ST) {
       const ly = side < 0 ? y - 86 : y + 50;
       s += `<g class="hot st" data-tip="${id}" tabindex="0" role="button" aria-label="${esc(t)}">
         <rect x="${x - 105}" y="${side < 0 ? y - 106 : y - 26}" width="210" height="132" fill="transparent"/>
         <circle cx="${x}" cy="${y}" r="24" fill="${col}" opacity=".25" filter="url(#glow)"/>
         <circle cx="${x}" cy="${y}" r="17" fill="#11161d" stroke="${col}" stroke-width="3"/>${T(x, y + 6, ST.findIndex(q => q[0] === id) + 1, F.px, 16, col, 'middle')}
-        ${T(x, ly, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, ly + 26, t, F.disp, 26, col === C.c2 ? C.chalk : col, 'middle', 'font-weight="600"')}${T(x, ly + 46, sub, F.body, 13.5, C.c2, 'middle')}</g>`;
+        ${T(x, ly, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, ly + 26, t, F.disp, 26, col === C.c2 ? C.chalk : col, 'middle', 'font-weight="600"')}</g>`;
     }
     s += '</svg>';
     const art = $('sysArt'), tip = $('sysTip'), sys = $('sys');
