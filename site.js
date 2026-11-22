@@ -25,9 +25,6 @@
     U ? [`${U.r00.lap.toFixed(0)} s → ${U.r40.lap.toFixed(0)} s`, 'one lap on a snowy track it never practiced on: the first version, and the version after 40 rounds', 'y'] : null,
     U ? [`${Math.round(gap * 100)} %`, `of the distance to the game's own AI closed there (the game's AI, which knows the track: ${U.oracle.lap.toFixed(0)} s)`, 'c'] : null]
     .filter(Boolean).map(([v, k, c]) => `<div><b class="${c}">${v}</b><span>${k}</span></div>`).join('');
-  { const g = runs.map(r => r.gap_closed * 100);
-    if ($('runsSummary')) $('runsSummary').textContent = `Every run kept getting faster, and on the tracks it never practiced on each one closed between ${Math.floor(Math.min(...g))} % and ${Math.floor(Math.max(...g))} % of the distance to the game's own AI.`; }
-  if (U && $('gapExample')) $('gapExample').textContent = `Example: start B needs ${U.r00.lap.toFixed(0)} s on the snowy track, the game's own AI ${U.oracle.lap.toFixed(0)} s and the final version ${U.r40.lap.toFixed(0)} s, so that lap closed (${U.r00.lap.toFixed(0)} − ${U.r40.lap.toFixed(0)}) / (${U.r00.lap.toFixed(0)} − ${U.oracle.lap.toFixed(0)}) ≈ ${Math.round(gap * 100)} % of the distance.`;
   {
     const starts = [...new Map(runs.map(r => [r.start, r.start_test_s])).entries()];
     const rows = [...starts.map(([k, v]) => [startName(k), v, 'var(--ghost)']), ["Game's own AI", res.oracle_test_s, 'var(--oracle)']];

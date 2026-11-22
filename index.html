@@ -7,14 +7,14 @@
 <meta name="description" content="An AI learns to race in a video game by rewriting its own driving program between laps, from nothing but its own lap records. Every change is measured on the track and reviewed in writing.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 8 8%27 shape-rendering=%27crispEdges%27%3E%3Crect width=%278%27 height=%278%27 fill=%27%2311161d%27/%3E%3Crect x=%271%27 y=%273%27 width=%276%27 height=%272%27 fill=%27%2338d0e2%27/%3E%3Crect x=%271%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3Crect x=%275%27 y=%275%27 width=%272%27 height=%272%27 fill=%27%23e9eef3%27/%3E%3C/svg%3E">
 <link rel="stylesheet" href="fonts/fonts.css?v=3">
-<link rel="stylesheet" href="style.css?v=24">
+<link rel="stylesheet" href="style.css?v=24-left">
 </head>
 <body>
 <div class="bg" aria-hidden="true"><video autoplay muted loop playsinline preload="auto" poster="media/bg.jpg" src="media/bg.mp4"></video></div>
 <header class="top">
   <a class="logo" href="#top"><span>Race</span> <b>Ahead</b></a>
   <nav>
-    <a href="#drive">How it drives</a><a href="#start">The start</a><a href="#system">How it learns</a><a href="#evolution">Getting faster</a><a href="#round">One round</a><a href="#history">History</a><a href="#unseen">New track</a><a href="#results">Results</a>
+    <a href="#drive">How it drives</a><a href="#start">The start</a><a href="#system">How it learns</a><a href="#evolution">Getting faster</a><a href="#round">One round</a><a href="#history">History</a><a href="#unseen">New track</a>
     <a class="cta" href="play/">Race our AI</a>
   </nav>
 </header>
@@ -107,19 +107,13 @@
   <h2>Back to the snowy track: first version, final version and the game's own AI</h2>
   <p class="lead">The snowy track from the start was never used for practice. Three real laps on it, replayed side by side: the bad first version, the version after 40 rounds, and the game's own AI.</p>
   <div class="race" id="raceUnseen"></div>
-  <div class="playcta"><p>The final version is frozen and waiting on another track it never practiced on.</p><a class="btn primary" href="play/">Race it yourself</a></div>
-</section>
-
-<section id="results">
-  <p class="kicker px">08 · Not a lucky run</p>
-  <h2>Three bad starts, each run three times</h2>
-  <p class="lead">Everything above is one run: start B, first repeat. We ran each of the three bad starts three times, nine runs in all. <span id="runsSummary"></span></p>
-  <div class="results">
+  <div class="results" id="results">
     <figure><svg id="gRounds" viewBox="0 0 640 360" role="img" aria-label="Total time of the best version on the 10 practice tracks over 40 rounds, nine runs"></svg>
-      <figcaption id="gRoundsCap">Total time of the best version on the 10 practice tracks over 40 rounds, for all nine runs. The system only ever learns from its own laps. Hover a line.</figcaption></figure>
+      <figcaption id="gRoundsCap">Total lap time on the practice tracks as the driving program improves. Hover over a line for details.</figcaption></figure>
     <figure><svg id="gGap" viewBox="0 0 440 360" role="img" aria-label="How much of the distance to the game's own AI each run closed on four tracks it never practiced on"></svg>
-      <figcaption>How much of the distance to the game's own AI each run closed on 4 tracks it never practiced on. <span id="gapExample"></span> Average of 3 laps per track.</figcaption></figure>
+      <figcaption>How much of the lap-time gap to the game's AI each run closed on new tracks.</figcaption></figure>
   </div>
+  <div class="playcta"><p>The final version is frozen and waiting on another track it never practiced on.</p><a class="btn primary" href="play/">Race it yourself</a></div>
 </section>
 
 <section id="cite">
@@ -152,6 +146,6 @@
 <script src="data.js"></script>
 <script src="laps.js"></script>
 <script src="laps-unseen.js"></script>
-<script src="site.js?v=28-palette9"></script>
+<script src="site.js?v=28-combined"></script>
 </body>
 </html>
