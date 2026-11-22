@@ -67,7 +67,7 @@ h1.title b{font-weight:800;text-shadow:-.05em 0 0 rgba(111,200,207,.3),-.1em 0 0
 .btn{display:inline-block;font:600 15px var(--f-body);padding:10px 18px;color:var(--chalk);background:var(--panel-2);
   border:1px solid var(--rule);text-decoration:none;cursor:pointer;clip-path:var(--notch)}
 .btn:hover{border-color:var(--chalk-3)}
-.hero .btn.primary{background:var(--slow);border-color:var(--slow)}
+.hero .btn.primary,.playcta .btn.primary{background:var(--slow);border-color:var(--slow)}
 .btn.primary{background:var(--fast);color:var(--asphalt);border-color:var(--fast)}
 .btn.off{color:var(--chalk-3);cursor:default}
 .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:36px}
@@ -92,7 +92,7 @@ h1.title b{font-weight:800;text-shadow:-.05em 0 0 rgba(111,200,207,.3),-.1em 0 0
 .flow .arrow{align-self:center;font-style:normal;font:600 28px var(--f-display);color:var(--chalk-3)}
 .hint2{color:var(--chalk-3);font-size:14px;margin:-10px 0 18px}
 .playcta{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:22px;
-  background:var(--asphalt);padding:16px 20px;clip-path:var(--notch);border-left:3px solid var(--fast)}
+  background:var(--asphalt);padding:16px 20px;clip-path:var(--notch);border-left:3px solid var(--slow)}
 .playcta p{margin:0;color:var(--chalk-2)}
 .card{background:var(--asphalt);padding:18px 20px;clip-path:var(--notch)}
 .card p{margin:0;color:var(--chalk-2);font-size:15px}
