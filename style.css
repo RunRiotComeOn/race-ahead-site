@@ -207,7 +207,11 @@ h1.title b{font-weight:800;text-shadow:-.05em 0 0 rgba(111,200,207,.3),-.1em 0 0
 b.g{color:var(--faster)!important}b.r{color:var(--slower)!important}
 .ver{font-size:14.5px;color:var(--chalk-2);margin:8px 0 0;line-height:1.5}
 .ver .px{font-size:10px;margin-right:6px}.ver.g .px{color:var(--faster)}.ver.r .px{color:var(--slower)}
-.round-review{margin:0 0 12px}
+.wording{display:grid;gap:6px;margin:12px 0 0;font-size:14px;color:var(--chalk-2)}
+.wording div{padding:6px 9px;border-left:2px solid var(--chalk-3);background:#141b23}
+.wording div+div{border-left-color:var(--fast)}
+.wording dt{font:600 11px var(--f-data);text-transform:uppercase}
+.wording dd{margin:3px 0 0}
 .bdetail{border-top:1px solid var(--rule);margin-top:10px;padding-top:12px}
 .bdetail .hyptxt{margin:8px 0 10px;max-width:900px}
 .bdetail .row{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--rule);padding:4px 0;font-size:14px;max-width:520px;color:var(--chalk-2)}

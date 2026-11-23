@@ -220,90 +220,41 @@
     { rate: 2, src: id => `media/sm-${id}.mp4` });
 
   /* ---------- inside a round ---------- */
-  const R = D.rounds;
+  const R = window.EVOLVE_LEARN;
   const OUT = { adopted: ['edits kept', '--faster'], branch_merged: ['redesign joined', '--best'], nothing_admitted: ['nothing kept', '--chalk-3'], confirm_failed: ['kept edits failed the re-check', '--slower'],
     no_valid_proposal: ['no usable proposal', '--chalk-3'], branch_opened: ['bigger redesign started', '--slow'], branch_not_improved: ['redesign repaired, not faster yet', '--slow'], branch_improved: ['redesign improved', '--slow'],
     branch_merge_rejected: ['faster, but the reviewer refused to let it join', '--chalk-2'], branch_merge_blocked: ['faster, held back to fix a flaw', '--chalk-2'] };
   const outLabel = o => (OUT[o.split('+')[0]] || [o.replace(/_/g, ' ')])[0] + (o.includes('+branch_dropped') ? ' · redesign dropped' : '');
-  const kind = r => r.crash ? '--slower' : r.outcome === 'adopted' ? '--faster' : r.outcome === 'branch_merged' ? '--best' : r.branch ? '--slow' : '--chalk-3';
-  let cur = R.findIndex(r => r.round === 15);
-  $('curveLegend').innerHTML = [['--faster', 'edits kept'], ['--best', 'bigger redesign joined'], ['--slow', 'working on a bigger redesign'], ['--slower', 'new version crashed'], ['--chalk-3', 'nothing kept']]
+  const kind = r => r.crash || r.outcome === 'confirm_failed' ? '--slower' : r.outcome === 'adopted' ? '--faster' : r.outcome === 'branch_merged' ? '--best' : r.branch ? '--slow' : '--chalk-3';
+  let cur = R.findIndex(r => r.round === 16);
+  $('curveLegend').innerHTML = [['--faster', 'edits kept'], ['--best', 'bigger redesign joined'], ['--slow', 'working on a bigger redesign'], ['--slower', 'crash or failed re-check'], ['--chalk-3', 'nothing kept']]
     .map(([c, t]) => `<span><i style="background:var(${c})"></i>${t}</span>`).join('');
   function curve() {
     const svg = $('curve'), W = Math.max(320, svg.getBoundingClientRect().width), H = W < 600 ? 200 : 230; svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.height = H + 'px'; svg.innerHTML = '';
     const n = R.length, L = 44, Rm = 12, Tm = 14, B = 24, x = i => L + (W - L - Rm) * (i + .5) / n;
     const after = R.map(r => r.new_s ?? r.champion_s), all = [R[0].champion_s, ...after], lo = Math.min(...all) - 30, hi = Math.max(...all) + 30, y = v => Tm + (H - Tm - B) * (hi - v) / (hi - lo);
     for (const v of [500, 600, 700, 800, 900, 1000]) if (v > lo && v < hi) { el('line', { x1: L, x2: W - Rm, y1: y(v), y2: y(v), stroke: css('--rule'), 'stroke-dasharray': '2 5' }, svg); el('text', { x: L - 6, y: y(v) + 4, 'text-anchor': 'end', fill: css('--chalk-3'), 'font-size': 11, 'font-family': css('--f-data') }, svg).textContent = v; }
-    for (const k of [1, 10, 20, 30, 40]) el('text', { x: x(k - 1), y: H - 6, 'text-anchor': 'middle', fill: css('--chalk-3'), 'font-size': 11, 'font-family': css('--f-data') }, svg).textContent = k;
+    for (const k of [1, 10, 16, 20, 30, 40]) el('text', { x: x(k - 1), y: H - 6, 'text-anchor': 'middle', fill: css('--chalk-3'), 'font-size': 11, 'font-family': css('--f-data') }, svg).textContent = k;
     let d = `M${x(-.5)},${y(R[0].champion_s)}`; R.forEach((r, i) => { d += `H${x(i)}V${y(after[i])}`; }); d += `H${x(n - .5)}`;
     el('path', { d, fill: 'none', stroke: css('--fast'), 'stroke-width': 2.5 }, svg);
     el('rect', { x: x(cur) - (W - L - Rm) / n / 2, y: Tm - 6, width: (W - L - Rm) / n, height: H - Tm - B + 8, fill: 'rgba(233,238,243,.06)', stroke: css('--chalk-2'), 'stroke-width': 1.5 }, svg);
     R.forEach((r, i) => {
-      const g = el('g', { style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': `Round ${r.round}: ${outLabel(r.outcome)}` }, svg), c = css(kind(r)), yy = y(after[i]), s = Math.min(6, (W - L - Rm) / n * .32);
+      const g = el('g', { style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-pressed': i === cur, 'aria-label': `Round ${r.round}: ${outLabel(r.outcome)}` }, svg), c = css(kind(r)), yy = y(after[i]), s = Math.min(6, (W - L - Rm) / n * .32);
       el('title', {}, g).textContent = `Round ${r.round} · ${outLabel(r.outcome)}` + (r.new_s ? ` · ${r.champion_s.toFixed(1)} → ${r.new_s.toFixed(1)} s` : '');
       el('rect', { x: x(i) - (W - L - Rm) / n / 2, y: Tm, width: (W - L - Rm) / n, height: H - Tm - B, fill: 'transparent' }, g);
       if (r.crash) el('path', { d: `M${x(i) - s},${yy - s}l${2 * s},${2 * s}m0,${-2 * s}l${-2 * s},${2 * s}`, stroke: c, 'stroke-width': 3 }, g);
       else el('rect', { x: x(i) - s, y: yy - s, width: 2 * s, height: 2 * s, fill: c, stroke: css('--panel'), 'stroke-width': 1.5 }, g);
       const go = () => { cur = i; curve(); detail(); };
-      g.addEventListener('click', go); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+      g.addEventListener('click', go);
+      g.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          go();
+          svg.querySelector('[aria-pressed="true"]').focus();
+        }
+      });
     });
   }
-  // The explorer uses edited examples for cases where the raw evaluations are hard to interpret.
-  const ROUND_EXAMPLES = {
-    6: { items: { i2: { plain_why: 'The label now matches the kart’s actual top speed. It has no effect on the lap times.' } } },
-    7: { items: { a1: { alone_s: 0 }, a2: { alone_s: 0 } } },
-    9: {
-      review: 'Drifting saved time overall, but the kart ran off the road and needed six resets. The reviewer left the whole feature out.',
-      items: {
-        q_drift: { plain_why: 'The switch does nothing by itself. Removing it disables the drift feature.' },
-        pb_drift: { plain_why: 'The rule limits where the kart tries to drift. The kart still ran wide in some corners.' },
-        e_drift_key: { loo_s: 'Could not run', plain_why: 'The drift logic needs this counter, but the counter alone changes nothing.' },
-        e_consts: { loo_s: 'Needs the drift settings', plain_why: 'The settings only affect the kart when the drift logic uses them.' },
-        e_drift_tail: { alone_s: 'Needs the other drift edits', plain_why: 'This is what makes the kart drift. It needs the switch, the counter and the settings.' }
-      }
-    },
-    10: { review: 'The redesign was faster, but its three cornering settings made the kart drive the same way. It stayed on the side branch until the settings were fixed.' },
-    13: { review: 'The redesign cut total time, but the game had to put the kart back on the road twice. The reviewer rejected it because it was too unreliable in fast corners.' },
-    15: {
-      all: 12.72,
-      noticed: 'The kart turned in too late at high speed and ran wide in long corners. The second model tried looking farther ahead and tested a separate change to pull the kart back toward the center of the track.',
-      items: {
-        s1_steer_ctrl: {
-          plain: 'Look farther ahead at high speed and steer more firmly into corners.',
-          alone_s: 15.12,
-          loo_s: 16.12,
-          plain_why: 'It saved 15.1 seconds on its own, improved 9 of 10 tracks, and finished every lap. The reviewer kept it.'
-        },
-        s2_steer_body: {
-          plain: 'Pull the kart back toward the center of the track more aggressively when it drifts wide.',
-          alone_s: -3.4,
-          loo_s: -2.4,
-          plain_why: 'The kart overcorrected in long corners. This edit cost time on its own and gave back 2.4 seconds of the steering edit’s gain when they ran together.'
-        }
-      }
-    },
-    22: {
-      items: {
-        kb_base: { status: ['Failed re-check', 'n'], plain_why: 'The reviewer picked this edit after a small gain on its own. That gain disappeared when it was run again.' },
-        grip_eff: { plain_why: 'The two edits worked better together, but this one alone slowed the kart on nearly every track.' }
-      }
-    },
-    31: {
-      items: {
-        sat_keys: { loo_s: 'Needs these settings', plain_why: 'The settings have no effect by themselves. The new braking rule needs them to run.' },
-        sat_law: { alone_s: 'Needs the settings edit', plain_why: 'With its settings in place, the rule cut total time by about 1.3 seconds. Every lap finished without a reset.' }
-      }
-    },
-    34: {
-      noticed: 'The early and late braking options behaved the same way. The second model tried giving them separate thresholds for lifting off the throttle and braking.',
-      items: {
-        brake_real2: { loo_s: 'Needs this helper', plain_why: 'The helper returned the old values, so the three braking levels still behaved alike.' },
-        brake_real: { alone_s: 'Needs the braking helper', plain_why: 'The edit depended on the helper and the combined proposal made no measurable difference.' }
-      }
-    },
-    35: { items: { no_brake_bonus: { plain_why: 'Letting the kart carry its speed after a drift saved about half a second across the 10 tracks, with no side effects.' } } },
-    36: { review: 'The redesign was quicker, but it removed braking and steering options that the decision model could still select. The reviewer rejected it until the choices and the code matched.' }
-  };
   const speedChange = v => {
     const amount = Math.abs(v);
     if (amount < 0.05) return 'no difference';
@@ -312,8 +263,9 @@
   };
   const meas = (label, v, removing = false) => {
     const timed = typeof v === 'number';
-    const text = timed ? speedChange(removing ? -v : v) : v ?? 'No timed result';
-    const color = timed && Math.abs(v) >= 0.05 ? (v > 0 ? 'g' : 'r') : '';
+    const change = removing ? -v : v;
+    const text = timed ? speedChange(change) : v ?? 'No timed result';
+    const color = timed && Math.abs(change) >= 0.05 ? (change > 0 ? 'g' : 'r') : '';
     return `<div class="m"><span>${label}</span><b class="${color}">${esc(text)}</b></div>`;
   };
   const modelNames = t => String(t ?? '').replace(/\bJev\b/gi, 'the decision model').replace(/\bDeepSeek\b/gi, 'LLM');
@@ -321,42 +273,45 @@
   const NOVALID = 'No usable proposal this round: the proposed edits were invalid, so nothing was driven on track.';
   function detail() {
     const r = R[cur], o = OUT[r.outcome.split('+')[0]] || [outLabel(r.outcome), r.branch ? '--slow' : '--chalk-3'];
-    const example = ROUND_EXAMPLES[r.round] ?? {};
     const d = r.new_s ? r.champion_s - r.new_s : null;
     const times = r.new_s ? `Total time ${r.champion_s.toFixed(1)} → ${r.new_s.toFixed(1)} s · ${d.toFixed(1)} s faster` : r.crash ? 'The new version crashed, so nothing changed' : 'The best version stays the same';
-    const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : example.noticed ?? plainWords(r.plain);
-    const all = example.all ?? r.items.find(it => it.all_s != null)?.all_s;
+    const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : r.plain;
+    const all = r.items.find(it => it.all_s != null)?.all_s;
     const hasComparisons = all != null && r.items.length > 1;
     const testSummary = all != null ? meas(r.items.length === 1 ? 'Proposed edit vs. previous best' : 'All proposed edits together vs. previous best', all) :
       r.branch && !r.crash && r.candidate_s != null ? meas('Redesign against the previous best', r.champion_s - r.candidate_s) : '';
-    const items = r.items.map(edit => {
-      const it = { ...edit, ...example.items?.[edit.id] };
-      const st = it.all_s == null ? null : it.status ?? (it.admitted ? ['Kept', 'g'] : ['Rejected', 'r']);
+    const parts = { action_space: 'Decision Interface', executor: 'Executor', playbook: 'Playbook' };
+    const items = r.items.map(it => {
+      const st = !it.verdict ? null : !it.admitted ? ['Rejected', 'r'] :
+        r.outcome === 'confirm_failed' ? ['Failed re-check', 'n'] : ['Kept', 'g'];
+      const name = it.plain || `${parts[it.part]} · ${it.id.replaceAll('_', ' ')}`;
       return `<div class="item${st ? ' ' + st[1] : ''}" data-id="${esc(it.id)}">
-        <div class="ih"><p class="chg">${esc(plainWords(it.plain) || it.id)}</p>${st ? `<span class="px st ${st[1]}">${st[0]}</span>` : ''}</div>
-        ${st && hasComparisons ? `<div class="meas">${meas('Without this edit', it.loo_s, true)}${meas('This edit alone', it.alone_s)}</div>` : ''}
-        ${st && it.plain_why ? `<p class="ver ${st[1]}"><span class="px">Reviewer</span>${esc(plainWords(it.plain_why))}</p>` : ''}</div>`;
+        <div class="ih"><p class="chg">${esc(name)}</p>${st ? `<span class="px st ${st[1]}">${st[0]}</span>` : ''}</div>
+        ${hasComparisons ? `<div class="meas">${meas('Without this edit', it.loo_s, true)}${meas('This edit alone', it.alone_s)}</div>` : ''}
+        ${it.before ? `<dl class="wording"><div><dt>Before</dt><dd>${esc(it.before)}</dd></div><div><dt>After</dt><dd>${esc(it.after)}</dd></div></dl>` : ''}
+        ${it.plain_why ? `<p class="ver ${st?.[1] ?? ''}"><span class="px">Reviewer</span>${esc(it.plain_why)}</p>` :
+          it.verdict ? `<details class="ver ${st[1]}"><summary>Reviewer’s original notes</summary><p>${esc(it.verdict)}</p></details>` : ''}</div>`;
     }).join('');
     $('rDetail').innerHTML = `<div class="rh"><h4 class="px" style="color:var(${r.crash ? '--slower' : o[1]})">Round ${r.round} · ${esc(o[0])}</h4><span>${times}</span></div>
       ${r.outcome === 'confirm_failed' ? `<div class="alert"><span class="px">Re-check</span> The reviewer's choice was driven again as a whole and was not faster than the best version, so nothing was kept.</div>` : ''}
       ${r.crash ? `<div class="alert"><span class="px">Crash</span> The new version failed on ${r.crash_tracks} of 10 tracks. The error message goes back to the second model for the next round.</div>` : ''}
-      <p class="noticed"><span class="px y">What the second model saw and tried</span>${esc(noticed)}</p>
+      <p class="noticed"><span class="px y">What the Proposer saw and tried</span>${esc(noticed)}</p>
       ${testSummary ? `<div class="meas round-test">${testSummary}</div>` : ''}
-      ${example.review ? `<p class="ver round-review"><span class="px">Reviewer</span>${esc(example.review)}</p>` : ''}
       ${items ? `<p class="px sub">The edits${hasComparisons ? ' <span>“Without” compares with the full proposal. “Alone” compares with the previous best.</span>' : r.branch ? ' <span>tested together as a redesign</span>' : ''}</p><div class="items">${items}</div>` : ''}`;
   }
   curve(); detail();
 
   /* ---------- branches ---------- */
+  const branchRounds = D.rounds;
   const END = { merged: ['Joined the main line', '--best'], dropped: ['Given up', '--slower'], rejected: ['Refused by the reviewer', '--chalk-2'], open: ['Still open when the run ended', '--slow'] };
   let bSel = D.branches.findIndex(b => b.opened === 20); if (bSel < 0) bSel = 0;
   function lineage() {
     const svg = $('lineage'), W = Math.max(520, svg.getBoundingClientRect().width), H = 240; svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.innerHTML = '';
-    const n = R.length, Lm = 24, Rm = 20, x = r => Lm + (W - Lm - Rm) * (r - .5) / n, lanes = 3, gap = 62, mainY = 60, laneY = k => mainY + gap * (k + 1);
+    const n = branchRounds.length, Lm = 24, Rm = 20, x = r => Lm + (W - Lm - Rm) * (r - .5) / n, lanes = 3, gap = 62, mainY = 60, laneY = k => mainY + gap * (k + 1);
     for (let r = 5; r <= n; r += 5) { el('line', { x1: x(r), x2: x(r), y1: mainY - 20, y2: H - 26, stroke: css('--rule'), 'stroke-dasharray': '2 6' }, svg); el('text', { x: x(r), y: H - 8, 'text-anchor': 'middle', fill: css('--chalk-3'), 'font-size': 11, 'font-family': css('--f-data') }, svg).textContent = r; }
     el('line', { x1: x(.5), x2: x(n + .5), y1: mainY, y2: mainY, stroke: css('--fast'), 'stroke-width': 5 }, svg);
     el('text', { x: x(.5), y: mainY - 26, fill: css('--fast'), 'font-size': 11, 'font-family': css('--f-pixel') }, svg).textContent = 'BEST SO FAR';
-    R.forEach(r => { if (!r.new_s) return; el('rect', { x: x(r.round) - 6, y: mainY - 6, width: 12, height: 12, fill: css(r.outcome === 'branch_merged' ? '--best' : '--faster'), stroke: css('--panel'), 'stroke-width': 2 }, svg);
+    branchRounds.forEach(r => { if (!r.new_s) return; el('rect', { x: x(r.round) - 6, y: mainY - 6, width: 12, height: 12, fill: css(r.outcome === 'branch_merged' ? '--best' : '--faster'), stroke: css('--panel'), 'stroke-width': 2 }, svg);
       el('text', { x: x(r.round), y: mainY - 11, 'text-anchor': 'middle', fill: css('--chalk-2'), 'font-size': 10, 'font-family': css('--f-data') }, svg).textContent = Math.round(r.new_s); });
     const busy = Array(lanes).fill(-1);
     D.branches.forEach((b, i) => {
@@ -372,10 +327,10 @@
       el('rect', { x: x(first) - 10, y: Math.min(mainY, yy) - 4, width: x(last) - x(first) + 20, height: Math.abs(yy - mainY) + 20, fill: 'transparent' }, g);
     });
     const b = D.branches[bSel], [endTxt, endCol] = END[b.end];
-    const rows = b.rounds.map(([r, c, crash, o]) => `<div class="row"><span>Round ${r} · ${esc(outLabel(o))}</span><span class="mono" style="color:${crash ? 'var(--slower)' : ''}">${crash ? `crashed on ${(R.find(q => q.round === r) || {}).crash_tracks ?? '?'} of 10 tracks` : c != null && c < 2000 ? 'total ' + c.toFixed(1) + ' s' : '—'}</span></div>`).join('');
-    const champ = (R.find(r => r.round === b.opened) || {}).champion_s;
+    const rows = b.rounds.map(([r, c, crash, o]) => `<div class="row"><span>Round ${r} · ${esc(outLabel(o))}</span><span class="mono" style="color:${crash ? 'var(--slower)' : ''}">${crash ? `crashed on ${(branchRounds.find(q => q.round === r) || {}).crash_tracks ?? '?'} of 10 tracks` : c != null && c < 2000 ? 'total ' + c.toFixed(1) + ' s' : '—'}</span></div>`).join('');
+    const champ = (branchRounds.find(r => r.round === b.opened) || {}).champion_s;
     $('bDetail').innerHTML = `<div class="rh"><h4 class="px" style="color:var(${endCol})">${endTxt}</h4><span>started in round ${b.opened}${champ ? ` · the best version then: ${champ.toFixed(1)} s` : ''}</span></div>
-      <p class="noticed"><span class="px y">What the redesign tried</span>${esc(plainWords((R.find(r => r.round === b.opened) || {}).plain))}</p>
+      <p class="noticed"><span class="px y">What the redesign tried</span>${esc(plainWords((branchRounds.find(r => r.round === b.opened) || {}).plain))}</p>
       <p class="px sub">Round by round</p>${rows}`;
   }
   lineage();
