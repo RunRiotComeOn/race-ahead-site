@@ -226,7 +226,7 @@
     branch_merge_rejected: ['faster, but the reviewer refused to let it join', '--chalk-2'], branch_merge_blocked: ['faster, held back to fix a flaw', '--chalk-2'] };
   const outLabel = o => (OUT[o.split('+')[0]] || [o.replace(/_/g, ' ')])[0] + (o.includes('+branch_dropped') ? ' · redesign dropped' : '');
   const kind = r => r.crash ? '--slower' : r.outcome === 'adopted' ? '--faster' : r.outcome === 'branch_merged' ? '--best' : r.branch ? '--slow' : '--chalk-3';
-  let cur = R.findIndex(r => r.round === 15), focus = 's2_steer_body';
+  let cur = R.findIndex(r => r.round === 15);
   $('curveLegend').innerHTML = [['--faster', 'edits kept'], ['--best', 'bigger redesign joined'], ['--slow', 'working on a bigger redesign'], ['--slower', 'new version crashed'], ['--chalk-3', 'nothing kept']]
     .map(([c, t]) => `<span><i style="background:var(${c})"></i>${t}</span>`).join('');
   function curve() {
@@ -244,42 +244,106 @@
       el('rect', { x: x(i) - (W - L - Rm) / n / 2, y: Tm, width: (W - L - Rm) / n, height: H - Tm - B, fill: 'transparent' }, g);
       if (r.crash) el('path', { d: `M${x(i) - s},${yy - s}l${2 * s},${2 * s}m0,${-2 * s}l${-2 * s},${2 * s}`, stroke: c, 'stroke-width': 3 }, g);
       else el('rect', { x: x(i) - s, y: yy - s, width: 2 * s, height: 2 * s, fill: c, stroke: css('--panel'), 'stroke-width': 1.5 }, g);
-      const go = () => { cur = i; focus = null; curve(); detail(); };
+      const go = () => { cur = i; curve(); detail(); };
       g.addEventListener('click', go); g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
   }
-  // plain-language view of a round (captions written for general readers, demo_export.py --plain); the full record stays one click away
-  const secs = v => Math.abs(v) < 0.05 ? null : Math.abs(v).toFixed(1) + ' s';
-  const meas = (label, v, kind) => {
-    if (v == null) return '';
-    const s = secs(v), txt = !s ? 'no difference' : kind === 'without' ? (v > 0 ? `${s} slower` : `${s} faster`) : (v > 0 ? `${s} faster` : `${s} slower`);
-    const good = s && (kind === 'without' ? v > 0 : v > 0), bad = s && !good;
-    return `<div class="m"><span>${label}</span><b class="${good ? 'g' : bad ? 'r' : ''}">${txt}</b></div>`;
+  // The explorer uses edited examples for cases where the raw evaluations are hard to interpret.
+  const ROUND_EXAMPLES = {
+    6: { items: { i2: { plain_why: 'The label now matches the kart’s actual top speed. It has no effect on the lap times.' } } },
+    7: { items: { a1: { alone_s: 0 }, a2: { alone_s: 0 } } },
+    9: {
+      review: 'Drifting saved time overall, but the kart ran off the road and needed six resets. The reviewer left the whole feature out.',
+      items: {
+        q_drift: { plain_why: 'The switch does nothing by itself. Removing it disables the drift feature.' },
+        pb_drift: { plain_why: 'The rule limits where the kart tries to drift. The kart still ran wide in some corners.' },
+        e_drift_key: { loo_s: 'Could not run', plain_why: 'The drift logic needs this counter, but the counter alone changes nothing.' },
+        e_consts: { loo_s: 'Needs the drift settings', plain_why: 'The settings only affect the kart when the drift logic uses them.' },
+        e_drift_tail: { alone_s: 'Needs the other drift edits', plain_why: 'This is what makes the kart drift. It needs the switch, the counter and the settings.' }
+      }
+    },
+    10: { review: 'The redesign was faster, but its three cornering settings made the kart drive the same way. It stayed on the side branch until the settings were fixed.' },
+    13: { review: 'The redesign cut total time, but the game had to put the kart back on the road twice. The reviewer rejected it because it was too unreliable in fast corners.' },
+    15: {
+      all: 12.72,
+      noticed: 'The kart turned in too late at high speed and ran wide in long corners. The second model tried looking farther ahead and tested a separate change to pull the kart back toward the center of the track.',
+      items: {
+        s1_steer_ctrl: {
+          plain: 'Look farther ahead at high speed and steer more firmly into corners.',
+          alone_s: 15.12,
+          loo_s: 16.12,
+          plain_why: 'It saved 15.1 seconds on its own, improved 9 of 10 tracks, and finished every lap. The reviewer kept it.'
+        },
+        s2_steer_body: {
+          plain: 'Pull the kart back toward the center of the track more aggressively when it drifts wide.',
+          alone_s: -3.4,
+          loo_s: -2.4,
+          plain_why: 'The kart overcorrected in long corners. This edit cost time on its own and gave back 2.4 seconds of the steering edit’s gain when they ran together.'
+        }
+      }
+    },
+    22: {
+      items: {
+        kb_base: { status: ['Failed re-check', 'n'], plain_why: 'The reviewer picked this edit after a small gain on its own. That gain disappeared when it was run again.' },
+        grip_eff: { plain_why: 'The two edits worked better together, but this one alone slowed the kart on nearly every track.' }
+      }
+    },
+    31: {
+      items: {
+        sat_keys: { loo_s: 'Needs these settings', plain_why: 'The settings have no effect by themselves. The new braking rule needs them to run.' },
+        sat_law: { alone_s: 'Needs the settings edit', plain_why: 'With its settings in place, the rule cut total time by about 1.3 seconds. Every lap finished without a reset.' }
+      }
+    },
+    34: {
+      noticed: 'The early and late braking options behaved the same way. The second model tried giving them separate thresholds for lifting off the throttle and braking.',
+      items: {
+        brake_real2: { loo_s: 'Needs this helper', plain_why: 'The helper returned the old values, so the three braking levels still behaved alike.' },
+        brake_real: { alone_s: 'Needs the braking helper', plain_why: 'The edit depended on the helper and the combined proposal made no measurable difference.' }
+      }
+    },
+    35: { items: { no_brake_bonus: { plain_why: 'Letting the kart carry its speed after a drift saved about half a second across the 10 tracks, with no side effects.' } } },
+    36: { review: 'The redesign was quicker, but it removed braking and steering options that the decision model could still select. The reviewer rejected it until the choices and the code matched.' }
+  };
+  const speedChange = v => {
+    const amount = Math.abs(v);
+    if (amount < 0.05) return 'no difference';
+    const time = amount < 0.1 ? 'under 0.1 s' : `${amount.toFixed(1)} s`;
+    return `${time} ${v > 0 ? 'faster' : 'slower'}`;
+  };
+  const meas = (label, v, removing = false) => {
+    const timed = typeof v === 'number';
+    const text = timed ? speedChange(removing ? -v : v) : v ?? 'No timed result';
+    const color = timed && Math.abs(v) >= 0.05 ? (v > 0 ? 'g' : 'r') : '';
+    return `<div class="m"><span>${label}</span><b class="${color}">${esc(text)}</b></div>`;
   };
   const modelNames = t => String(t ?? '').replace(/\bJev\b/gi, 'the decision model').replace(/\bDeepSeek\b/gi, 'LLM');
   const plainWords = t => modelNames(t).replace(/\bThe proposer\b/g, 'The system').replace(/\bthe proposer\b/g, 'the system').replace(/\bproposer\b/g, 'system');
   const NOVALID = 'No usable proposal this round: the proposed edits were invalid, so nothing was driven on track.';
   function detail() {
     const r = R[cur], o = OUT[r.outcome.split('+')[0]] || [outLabel(r.outcome), r.branch ? '--slow' : '--chalk-3'];
+    const example = ROUND_EXAMPLES[r.round] ?? {};
     const d = r.new_s ? r.champion_s - r.new_s : null;
     const times = r.new_s ? `Total time ${r.champion_s.toFixed(1)} → ${r.new_s.toFixed(1)} s · ${d.toFixed(1)} s faster` : r.crash ? 'The new version crashed, so nothing changed' : 'The best version stays the same';
-    const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : plainWords(r.plain);
-    const items = r.items.map(it => {
-      const branchWork = it.all_s == null;
-      const st = branchWork ? null : r.outcome === 'confirm_failed' ? ['Not kept', 'n'] : it.admitted === true ? ['Kept', 'g'] : ['Rejected', 'r'];
-      return `<div class="item${it.id === focus ? ' focus' : ''}${st ? ' ' + st[1] : ''}" data-id="${esc(it.id)}">
+    const noticed = r.outcome === 'no_valid_proposal' ? NOVALID : example.noticed ?? plainWords(r.plain);
+    const all = example.all ?? r.items.find(it => it.all_s != null)?.all_s;
+    const hasComparisons = all != null && r.items.length > 1;
+    const testSummary = all != null ? meas(r.items.length === 1 ? 'Proposed edit vs. previous best' : 'All proposed edits together vs. previous best', all) :
+      r.branch && !r.crash && r.candidate_s != null ? meas('Redesign against the previous best', r.champion_s - r.candidate_s) : '';
+    const items = r.items.map(edit => {
+      const it = { ...edit, ...example.items?.[edit.id] };
+      const st = it.all_s == null ? null : it.status ?? (it.admitted ? ['Kept', 'g'] : ['Rejected', 'r']);
+      return `<div class="item${st ? ' ' + st[1] : ''}" data-id="${esc(it.id)}">
         <div class="ih"><p class="chg">${esc(plainWords(it.plain) || it.id)}</p>${st ? `<span class="px st ${st[1]}">${st[0]}</span>` : ''}</div>
-        ${branchWork ? '' : `<div class="meas">${meas('All edits together', it.all_s, 'with')}${meas('Without this edit', it.loo_s, 'without')}${meas('This edit alone', it.alone_s, 'with')}</div>`}
-        ${it.plain_why && !branchWork ? `<p class="ver ${st[1]}"><span class="px">Reviewer</span>${esc(plainWords(it.plain_why))}</p>` : ''}</div>`;
+        ${st && hasComparisons ? `<div class="meas">${meas('Without this edit', it.loo_s, true)}${meas('This edit alone', it.alone_s)}</div>` : ''}
+        ${st && it.plain_why ? `<p class="ver ${st[1]}"><span class="px">Reviewer</span>${esc(plainWords(it.plain_why))}</p>` : ''}</div>`;
     }).join('');
-    const record = (r.hypothesis ? `<p><b>Second model's hypothesis.</b> ${esc(modelNames(r.hypothesis))}</p>` : '') + r.items.map(it => `<div class="rec"><p class="mono">${esc(it.id)} · ${esc(it.part)}</p>
-        ${it.rationale ? `<p><b>Rationale.</b> ${esc(modelNames(it.rationale))}</p>` : ''}${it.verdict ? `<p><b>Reviewer.</b> ${esc(modelNames(it.verdict))}</p>` : ''}${it.diff ? `<pre>${esc(modelNames(it.diff))}</pre>` : ''}</div>`).join('');
-    $('rDetail').innerHTML = `<div class="rh"><h3 class="px" style="color:var(${r.crash ? '--slower' : o[1]})">Round ${r.round} · ${esc(o[0])}</h3><span>${times}</span></div>
+    $('rDetail').innerHTML = `<div class="rh"><h4 class="px" style="color:var(${r.crash ? '--slower' : o[1]})">Round ${r.round} · ${esc(o[0])}</h4><span>${times}</span></div>
       ${r.outcome === 'confirm_failed' ? `<div class="alert"><span class="px">Re-check</span> The reviewer's choice was driven again as a whole and was not faster than the best version, so nothing was kept.</div>` : ''}
       ${r.crash ? `<div class="alert"><span class="px">Crash</span> The new version failed on ${r.crash_tracks} of 10 tracks. The error message goes back to the second model for the next round.</div>` : ''}
       <p class="noticed"><span class="px y">What the second model saw and tried</span>${esc(noticed)}</p>
-      ${items ? `<p class="px sub">The edits${r.items.some(it => it.all_s == null) ? ' <span>work on a big redesign aside: judged together when it asks to join</span>' : ' <span>each one driven on all 10 practice tracks</span>'}</p><div class="items">${items}</div>` : ''}
-      ${record ? `<details class="record"><summary class="px">Full record: the models' own words and the code</summary>${record}</details>` : ''}`;
+      ${testSummary ? `<div class="meas round-test">${testSummary}</div>` : ''}
+      ${example.review ? `<p class="ver round-review"><span class="px">Reviewer</span>${esc(example.review)}</p>` : ''}
+      ${items ? `<p class="px sub">The edits${hasComparisons ? ' <span>“Without” compares with the full proposal. “Alone” compares with the previous best.</span>' : r.branch ? ' <span>tested together as a redesign</span>' : ''}</p><div class="items">${items}</div>` : ''}`;
   }
   curve(); detail();
 
@@ -310,7 +374,7 @@
     const b = D.branches[bSel], [endTxt, endCol] = END[b.end];
     const rows = b.rounds.map(([r, c, crash, o]) => `<div class="row"><span>Round ${r} · ${esc(outLabel(o))}</span><span class="mono" style="color:${crash ? 'var(--slower)' : ''}">${crash ? `crashed on ${(R.find(q => q.round === r) || {}).crash_tracks ?? '?'} of 10 tracks` : c != null && c < 2000 ? 'total ' + c.toFixed(1) + ' s' : '—'}</span></div>`).join('');
     const champ = (R.find(r => r.round === b.opened) || {}).champion_s;
-    $('bDetail').innerHTML = `<div class="rh"><h3 class="px" style="color:var(${endCol})">${endTxt}</h3><span>started in round ${b.opened}${champ ? ` · the best version then: ${champ.toFixed(1)} s` : ''}</span></div>
+    $('bDetail').innerHTML = `<div class="rh"><h4 class="px" style="color:var(${endCol})">${endTxt}</h4><span>started in round ${b.opened}${champ ? ` · the best version then: ${champ.toFixed(1)} s` : ''}</span></div>
       <p class="noticed"><span class="px y">What the redesign tried</span>${esc(plainWords((R.find(r => r.round === b.opened) || {}).plain))}</p>
       <p class="px sub">Round by round</p>${rows}`;
   }

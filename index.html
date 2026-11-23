@@ -14,7 +14,7 @@
 <header class="top">
   <a class="logo" href="#top"><span>Race</span> <b>Ahead</b></a>
   <nav>
-    <a href="#drive">How it drives</a><a href="#start">The start</a><a href="#system">How it learns</a><a href="#evolution">Getting faster</a><a href="#round">One round</a><a href="#history">History</a><a href="#unseen">New track</a>
+    <a href="#drive">How it drives</a><a href="#start">The start</a><a href="#system">How it learns</a><a href="#evolution">Getting faster</a><a href="#round">What gets kept</a><a href="#unseen">New track</a>
     <a class="cta" href="play/">Race our AI</a>
   </nav>
 </header>
@@ -84,26 +84,27 @@
 </section>
 
 <section id="round">
-  <p class="kicker px">05 · Open one round</p>
-  <h2>Every edit is measured three ways, then judged in writing</h2>
-  <p class="lead">Each square is one round: the total time of the best version on the 10 practice tracks after that round (lower is faster). Click a square to see, in plain words, what the system tried, how each edit did on the track, and why the reviewer kept or rejected it. Round 15 is open: one edit kept, one rejected.</p>
-  <div class="explorer">
-    <div class="curvebox"><svg id="curve" role="img" aria-label="Total time of the best version after each round"></svg><div class="legend" id="curveLegend"></div></div>
-    <div class="rdetail" id="rDetail"></div>
+  <p class="kicker px">05 · Inside the improvement process</p>
+  <h2>How the system decides what to keep</h2>
+  <div class="round-stage">
+    <h3>Choosing edits in one round</h3>
+    <p class="lead">Each square shows the best total time on the 10 practice tracks after that round. Select a square to see what the system tried and why the reviewer kept or rejected each edit. Round 15 starts open with one edit kept and one rejected. The edit comparisons use illustrative timings.</p>
+    <div class="explorer">
+      <div class="curvebox"><svg id="curve" role="img" aria-label="Total time of the best version after each round"></svg><div class="legend" id="curveLegend"></div></div>
+      <div class="rdetail" id="rDetail"></div>
+    </div>
+  </div>
+  <div id="history" class="round-stage">
+    <h3>Following a redesign across rounds</h3>
+    <p class="lead">Round 15 shows how individual edits are picked. Bigger redesigns are tested on branches and join the main line only if they beat the best time and pass review. Select a branch to see why the first redesign was dropped after round 5 or how the round 20 crash was fixed by round 21.</p>
+    <div class="lineage"><div class="lscroll"><svg id="lineage" role="img" aria-label="The best version so far and the side tracks of bigger redesigns"></svg></div><p class="swipe">Swipe the chart sideways to see all 40 rounds.</p>
+      <div class="legend"><span><i style="background:var(--fast)"></i>best version so far</span><span><i style="background:var(--faster)"></i>small edits kept</span><span><i style="background:var(--best)"></i>redesign that joined</span><span><i style="background:var(--slower)"></i>redesign given up · crash</span><span><i style="background:var(--chalk-3)"></i>refused by the reviewer</span></div>
+      <div class="bdetail" id="bDetail"></div></div>
   </div>
 </section>
 
-<section id="history">
-  <p class="kicker px">06 · Failures stay in the record</p>
-  <h2>Big redesigns, crashes and repairs are all kept</h2>
-  <p class="lead">The cyan line is the best version so far; each square on it is a round that made it faster (the number is its total time in seconds). A big redesign is built on a side track below the line and joins the main line only once it is faster and the reviewer agrees. A red cross is a round where the new version crashed. In rounds 1–5 a bold rewrite crashed on every track; each error message went back to the system until it gave the redesign up. In round 20 another redesign crashed on every track, was repaired in round 21, and joined the main line. Click any side track.</p>
-  <div class="lineage"><div class="lscroll"><svg id="lineage" role="img" aria-label="The best version so far and the side tracks of bigger redesigns"></svg></div><p class="swipe">Swipe the chart sideways to see all 40 rounds.</p>
-    <div class="legend"><span><i style="background:var(--fast)"></i>best version so far</span><span><i style="background:var(--faster)"></i>small edits kept</span><span><i style="background:var(--best)"></i>redesign that joined</span><span><i style="background:var(--slower)"></i>redesign given up · crash</span><span><i style="background:var(--chalk-3)"></i>refused by the reviewer</span></div>
-    <div class="bdetail" id="bDetail"></div></div>
-</section>
-
 <section id="unseen">
-  <p class="kicker px">07 · A track it never practiced on</p>
+  <p class="kicker px">06 · A track it never practiced on</p>
   <h2>Back to the snowy track: first version, final version and the game's own AI</h2>
   <p class="lead">The snowy track from the start was never used for practice. Three real laps on it, replayed side by side: the bad first version, the version after 40 rounds, and the game's own AI.</p>
   <div class="race" id="raceUnseen"></div>
@@ -146,6 +147,6 @@
 <script src="data.js"></script>
 <script src="laps.js"></script>
 <script src="laps-unseen.js"></script>
-<script src="site.js?v=28-combined"></script>
+<script src="site.js?v=30-merged-rounds"></script>
 </body>
 </html>
