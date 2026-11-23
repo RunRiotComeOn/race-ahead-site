@@ -48,19 +48,19 @@
   /* ---------- system diagram: details on hover / focus / tap ---------- */
   const TIPS = {
     rt0: ['A section is coming', 'The decision model sees the shape of the track ahead, the kart’s speed and any suggestions from the driving rules.'],
-    rt1: ['Driving rules', 'Rules offer suggestions, such as braking early for a tight turn.'],
-    rt2: ['Driving questions', 'The questions give the decision model choices about speed, where to steer and how to brake.'],
+    rt1: ['Playbook · driving rules', 'Rules offer suggestions, such as braking early for a tight turn.'],
+    rt2: ['Decision Interface · driving questions', 'The questions give the decision model choices about speed, where to steer and how to brake.'],
     rt3: ['Decision model', 'The decision model chooses how to approach the upcoming stretch of track.'],
-    rt4: ['Control code', 'The driving program turns those choices into steering, throttle and braking.'],
+    rt4: ['Executor · control code', 'The Executor turns those choices into steering, throttle and braking.'],
     rt5: ['Lap record', 'The system records how the kart drove, how long it took and where it went off the track.'],
-    c1: ['1 · Drive the best version', 'The best version so far runs on the practice tracks.'],
-    c2: ['2 · An LLM proposes changes', 'The LLM reads lap records and past decisions, tries ideas if needed, and explains the changes it suggests.'],
+    c1: ['1 · Drive the champion', 'The best version so far, the champion, runs on the practice tracks.'],
+    c2: ['2 · The Proposer suggests edits', 'An LLM, the Proposer, reads lap records and past decisions, tries ideas if needed, and explains the changes it suggests.'],
     c3: ['3 · Check it runs', 'The system checks that the new version can run on the practice tracks. Crashes are recorded for the next round.'],
-    c4: ['4 · Test the changes', 'The system drives laps with different combinations of changes to see which ones help.'],
-    c5: ['5 · A reviewer decides', 'The reviewer looks at how the changes performed and explains which ones to keep or reject.'],
-    c6: ['6 · Drive again', 'The system tests the selected changes together. A faster version becomes the new best.'],
-    trial: ['Try first', 'The LLM can compare an idea with the current version on a stretch of track or a full lap.'],
-    branch: ['Big redesigns', 'The system tests larger redesigns separately. A redesign can join the main program once it beats the best version.'],
+    c4: ['4 · The Evaluator tests the edits', 'The Evaluator drives laps with different combinations of changes to see which ones help.'],
+    c5: ['5 · The Reviewer decides', 'A second LLM call, the Reviewer, looks at how the changes performed and explains which ones to keep or reject.'],
+    c6: ['6 · Admission Gate', 'The system drives the selected edits together. Only a version that is faster and finishes cleanly becomes the new champion.'],
+    trial: ['Try first', 'The Proposer can compare an idea with the current version on a stretch of track or a full lap.'],
+    branch: ['Development branch', 'Larger redesigns are repaired over several rounds on a branch. A branch joins the main line once it beats the champion and passes review.'],
     editlog: ['Memory of past changes', 'The system consults past changes, their results and the reviewer’s decisions before suggesting new ideas.'],
   };
   {
@@ -69,12 +69,12 @@
     const F = { px: css('--f-pixel'), disp: css('--f-display'), body: css('--f-body') };
     const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const gx = [110, 306, 502, 698, 894, 1090];
-    const GATES = [['rt0', 'Track ahead', 'A section', 'Its shape, the kart\'s speed', C.c2], ['rt1', 'Suggest', 'Rules', 'Suggest an answer', C.slow],
-      ['rt2', 'Ask', 'Questions', 'How fast? Which line?', C.slow], ['rt3', 'Choose', 'Decision model', 'Picks one answer each', C.fast],
-      ['rt4', 'At the wheel', 'Control code', 'Answers → steering', C.slow], ['rt5', 'Afterwards', 'Lap record', 'Times, speeds, answers', C.c2]];
-    const ST = [['c1', 360, 420, 'Start', 'Drive', C.fast, -1], ['c2', 600, 420, 'LLM', 'Propose', C.slow, -1],
-      ['c3', 840, 420, 'Checks', 'Run it', C.c2, -1], ['c4', 840, 720, 'On track', 'Measure', C.fast, 1],
-      ['c5', 600, 720, 'Reviewer model', 'Decide', C.slow, 1], ['c6', 360, 720, 'Finish line', 'Drive again', C.faster, 1]];
+    const GATES = [['rt0', 'Track ahead', 'A section', 'Its shape, the kart\'s speed', C.c2], ['rt1', 'Playbook', 'Rules', 'Suggest an answer', C.slow],
+      ['rt2', 'Decision Interface', 'Questions', 'How fast? Which line?', C.slow], ['rt3', 'Choose', 'Decision model', 'Picks one answer each', C.fast],
+      ['rt4', 'Executor', 'Control code', 'Answers → steering', C.slow], ['rt5', 'Afterwards', 'Lap record', 'Times, speeds, answers', C.c2]];
+    const ST = [['c1', 360, 420, 'Champion', 'Drive', C.fast, -1], ['c2', 600, 420, 'Proposer', 'Propose', C.slow, -1],
+      ['c3', 840, 420, 'Checks', 'Run it', C.c2, -1], ['c4', 840, 720, 'Evaluator', 'Measure', C.fast, 1],
+      ['c5', 600, 720, 'Reviewer', 'Decide', C.slow, 1], ['c6', 360, 720, 'Admission Gate', 'Drive again', C.faster, 1]];
     const T = (x, y, t, f, size, fill, anchor = 'start', extra = '') => `<text x="${x}" y="${y}" font-family='${f}' font-size="${size}" fill="${fill}" text-anchor="${anchor}" ${extra}>${esc(t)}</text>`;
     const kart = col => `<g><rect x="-15" y="-8" width="30" height="16" rx="3" fill="${col}"/><rect x="-4" y="-5" width="10" height="10" fill="#111d25"/><rect x="-13" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="5" y="-12" width="8" height="4" fill="#0b0f14"/><rect x="-13" y="8" width="8" height="4" fill="#0b0f14"/><rect x="5" y="8" width="8" height="4" fill="#0b0f14"/><rect x="15" y="-5" width="3" height="10" fill="${C.chalk}"/></g>`;
     let s = `<svg viewBox="0 0 1200 840" class="sysvg" role="img" aria-label="Race Ahead system: run time and one round of evolution">
@@ -114,7 +114,7 @@
       <path d="M730 512C680 500 640 480 614 448" fill="none" stroke="${C.c3}" stroke-width="2" stroke-dasharray="5 5" marker-end="url(#ag)"/>
       <path d="M600 444V584M600 652V694" fill="none" stroke="${C.best}" stroke-width="3" marker-end="url(#ab)"/>`;
     const IN = [['trial', 400, 530, 'Before proposing', 'Try first', 'Test an idea on one section or lap', C.chalk], ['editlog', 800, 530, 'Memory', 'Past edits', 'Every decision and its reason', C.chalk],
-      ['branch', 600, 604, 'Pit lane', 'Big redesigns', 'Tested separately', C.best]];
+      ['branch', 600, 604, 'Development branch', 'Big redesigns', 'Repaired over rounds', C.best]];
     for (const [id, x, y, k, t, sub, col] of IN) s += `<g class="hot" data-tip="${id}" tabindex="0" role="button" aria-label="${esc(t)}">
       <rect x="${x - 120}" y="${y - 26}" width="240" height="${id === 'branch' ? 70 : 72}" rx="6" fill="${id === 'branch' ? 'rgba(255,136,130,.10)' : 'rgba(233,238,243,.03)'}" stroke="${id === 'branch' ? C.best : '#2e3a48'}" stroke-dasharray="${id === 'branch' ? '' : '5 5'}"/>
       ${T(x, y - 8, k.toUpperCase(), F.px, 10, C.c3, 'middle', 'letter-spacing="1.5"')}${T(x, y + 16, t, F.disp, 22, col, 'middle', 'font-weight="600"')}${T(x, y + 34, sub, F.body, 12.5, C.c2, 'middle')}</g>`;
