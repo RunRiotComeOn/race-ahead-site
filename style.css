@@ -249,14 +249,9 @@ footer .px{color:var(--chalk)}
 }
 @media (max-width:520px){.grid{grid-template-columns:1fr}}
 
-/* the video, played on the page */
-.vidbox{border:0;padding:0;background:transparent;max-width:min(1200px,94vw);width:100%}
-.vidbox::backdrop{background:rgba(8,11,15,.86)}
-.vidin{position:relative;background:#000;clip-path:var(--notch)}
-.vidin video{display:block;width:100%;height:auto;background:#000}
-.vclose{position:absolute;top:10px;right:10px;z-index:2;width:38px;height:38px;border:1px solid var(--rule);background:rgba(17,22,29,.85);
-  color:var(--chalk);font-size:18px;cursor:pointer}
-.vclose:hover{border-color:var(--chalk-3)}
+.demo-page{max-width:1056px;padding-top:clamp(24px,5vw,64px);padding-bottom:48px}
+.demo-page h1{font:italic 800 clamp(36px,6vw,64px)/1 var(--f-display);text-transform:uppercase}
+.demo-page video{aspect-ratio:16/9;border:1px solid var(--rule)}
 @media (max-width:700px){
   #lineage{min-width:760px}
   .swipe{display:block}

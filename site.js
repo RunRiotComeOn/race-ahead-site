@@ -365,16 +365,6 @@
     });
   }
 
-  // the 2:30 video plays in a dialog on the page (the link still opens the file without JavaScript)
-  { const box = $('vidBox'), v = $('demoVideo'), open = $('openVideo');
-    if (box && v && open && box.showModal) {
-      const close = () => { v.pause(); box.close(); };
-      open.addEventListener('click', e => { e.preventDefault(); box.showModal(); v.play().catch(() => {}); });
-      $('closeVideo').addEventListener('click', close);
-      box.addEventListener('click', e => { if (e.target === box) close(); });
-      box.addEventListener('close', () => v.pause());
-    } }
-
   // cite: copy the whole BibTeX entry
   const cb = $('copyBib');
   if (cb) cb.addEventListener('click', async () => {

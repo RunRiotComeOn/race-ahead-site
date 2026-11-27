@@ -5,7 +5,7 @@ native: the system diagram (HTML, details on hover or tap), the round explorer, 
 drawn by `site.js`. Learn uses `learn-data.js`, exported by `scripts/evolve/learn_export.py` from `crude-jev/s2`, the run in Figure 2 of the paper.
 The other views use the demo data (`data.js`, exported by `scripts/evolve/demo_export.py`). The only embedded videos are game
 footage: recorded laps replayed in SuperTuxKart by `scripts/evolve/footage.py`, synced in the page, with lap times that
-match the records. The 2:30 demo video is linked, not embedded.
+match the records. The 2:30 demo video has a shareable playback page at `video/`.
 
 - `index.html`, `style.css`, `site.js`, `data.js`, `laps.js` (zengarden: champions after rounds 0, 7, 11, 14, 40 and the oracle),
   `laps-unseen.js` (snowmountain: round 0, final champion, oracle), `fonts/`.
